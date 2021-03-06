@@ -1,12 +1,98 @@
 import { Glyph, Color, Terminal, Input } from "malwoden";
+import Util from './Util.js'
+import Tile from './Tile.js'
+
+var FLOOR_OPTS = {
+  glyph: new Glyph('.'),
+  flammability: 100,
+  blocksMovement: false,
+  blocksFire: false,
+}
+
+var DOOR_OPTS = {
+  glyph: new Glyph('+'),
+  flammability: 100,
+  blocksMovement: false,
+  blocksFire: false,
+}
+
+
+var WALL_OPTS = {
+  glyph: new Glyph('#'),
+  flammability: 5,
+  blocksMovement: true,
+  blocksFire: true,
+}
+
+var OOB_OPTS = {
+  glyph: new Glyph('?'),
+  flammability: 0,
+  blocksMovement: true,
+  blocksFire: true
+}
 
 export default class LevelMap {
-  constructor() {
+  constructor(w, h, iterations){
+    this.w = w;
+    this.h = h;
+    this.builder = new LevelMapBuilder(w, h, iterations);
+    this.tiles = {}
+    for (var i = 0; i < w; i += 1) {
+      this.tiles[i] = {}
+      for (var j = 0; j < h; j += 1) {
+        var v2 = {x:i, y:j}
+        var opts = WALL_OPTS
+        if (this.builder.IsFloor(v2)) {
+          opts = FLOOR_OPTS
+        } else if (this.builder.IsDoor(v2)) {
+          opts = DOOR_OPTS
+        }
+
+        this.tiles[i][j] = new Tile(opts)
+      }
+    }
+    this.oob = new Tile(OOB_OPTS)
+  }
+
+  GetTile(pos) {
+    if (typeof pos !== 'object') {
+      (null)();
+    }
+    if (!this.InBounds(pos)) {
+      return this.oob
+    }
+    return this.tiles[pos.x][pos.y]
+  }
+
+  InBounds(pos) {
+    return pos.x >= 0 && pos.y >= 0 && pos.x < this.w && pos.y < this.h;
+  }
+  Blocked(pos) {
+    return !this.InBounds(pos) || this.tiles[pos.x][pos.y].blocksMovement;
+  }
+
+  Render(terminal) {
+    for (var i = 0; i < this.w; i += 1) {
+      for (var j = 0; j < this.h; j += 1) {
+        var v2 = {x:i, y:j};
+        var current = this.GetTile(v2);
+        terminal.drawGlyph(v2, current.glyph);
+      }
+    }
+  }
+}
+
+
+
+class LevelMapBuilder {
+  constructor(w, h, iterations) {
+    this.w = w;
+    this.h = h;
     this.rooms = [
-      {x:0,y:0,w:20,h:20, g: "x"}
+      {x:0,y:0,w:this.w,h:this.h}
     ]
     this.doors = []
-    for (var i = 0; i < 7; i += 1) {
+    for (var i = 0; i < iterations; i += 1) {
       this.Step();
     }
   }
@@ -21,15 +107,15 @@ export default class LevelMap {
       var Pick= function(items) {
         return items[Math.floor(Math.random() * items.length)];
       }
-      var WeightedPick = function(items, weight) {
-        var reducer = (acc, val) => {return acc + val};
-        var valueIndex = Math.random() * (items.map(i => weight(i)).reduce(reducer, 0));
-        for (var i = 0; i < items.length; i += 1) {
-          valueIndex -= weight(items[i]);
-          if (valueIndex < 0) return items[i];
-        }
-        return undefined;
-      }
+      // var WeightedPick = function(items, weight) {
+      //   var reducer = (acc, val) => {return acc + val};
+      //   var valueIndex = Math.random() * (items.map(i => weight(i)).reduce(reducer, 0));
+      //   for (var i = 0; i < items.length; i += 1) {
+      //     valueIndex -= weight(items[i]);
+      //     if (valueIndex < 0) return items[i];
+      //   }
+      //   return undefined;
+      // }
 
       var that = this;
       var WeightedRandom = function(min,max,dice) {
@@ -41,7 +127,7 @@ export default class LevelMap {
         return Math.floor(result/dice);
       }
 
-      var cr = WeightedPick(this.rooms, (r) => r.w * r.w * r.h * r.h);
+      var cr = Util.WeightedPick(this.rooms, (r) => r.w * r.w * r.h * r.h);
       if (cr.w > 4 || cr.h > 4) {
         var roomsTemp = this.rooms;
 
@@ -100,7 +186,7 @@ export default class LevelMap {
         }
         else // either way
         {
-          if (WeightedPick([
+          if (Util.WeightedPick([
               {weight: cr.h * cr.h, cb: SplitVertically},
               {weight: cr.w * cr.w, cb: SplitHorizontally}
             ], i => i.weight).cb()) return;
@@ -118,10 +204,5 @@ export default class LevelMap {
   IsDoor(pos) {
     return this.doors.some(d => (d.x == pos.x) && (d.y == pos.y));
   }
-  InBounds(pos) {
-    return pos.x >= 0 && pos.y >= 0 && pos.x <= 20 && pos.y <= 20;
-  }
-  Blocked(pos) {
-    return !this.IsFloor(pos) && !this.IsDoor(pos) && this.InBounds(pos);
-  }
+
 }

@@ -1,20 +1,20 @@
 import { Glyph, Color, Terminal, FOV, Input } from "malwoden";
+import Util from './Util.js'
 
-const INITIAL_SPARK_COUNT = 7;
-const INITIAL_SPARK_HEAT = 40;
+const INITIAL_SPARK_COUNT = 4;
+const INITIAL_SPARK_HEAT = 20;
 const SMALL_THRESHOLD = 10;
 const LARGE_THRESHOLD = 40;
+
+
+
 
 export default class FireManager {
   constructor(map) {
     this.map = map;
     this.data = {};
-    var NotWall = function(pos) {
-      // console.log("Checking: " + pos);
-      return (map.IsFloor(pos) || map.IsDoor(pos)) && map.InBounds(pos);
-    }
     this.fov = new FOV.PreciseShadowcasting({
-      lightPasses: (pos) => !map.Blocked(pos),
+      lightPasses: (pos) => !map.GetTile(pos).blocksFire,
       topology: "four",
       cartesianRange: true,
     });
@@ -52,17 +52,6 @@ export default class FireManager {
   Pick (items) {
     return items[Math.floor(Math.random() * items.length)];
   }
-  Flammability(pos) {
-    if (!this.map.InBounds(pos))
-      return 0;
-
-    if (this.map.IsFloor(pos)) {
-      return 1.1;
-    } else if(this.map.IsDoor(pos)) {
-      0.25;
-    }
-    return 0.15;
-  }
 
   GetTileAt(pos) {
     if (this.data[pos.x] === undefined)
@@ -99,43 +88,51 @@ export default class FireManager {
           // var newY = current.y+dy;
           window.fov  = this.fov;
 
-          var distance = Math.floor(current.heat / 5) - 2;
+          var distance = Math.floor(current.heat / 9);
           var hits = this.fov.calculateArray({x:current.x, y:current.y}, distance).filter(
-            hit => !this.map.Blocked(hit.pos) &&
+            hit => !this.map.GetTile(hit.pos).blocksFire &&
               hit.r <= distance &&
               ((hit.pos.x != current.x) || (hit.pos.y != current.y))
           );
+          var hit = Util.WeightedPick(hits,(h) => this.map.GetTile(h.pos).flammabilitySquared())
 
-          window.hits = hits;
-          if (hits.length > 1 && distance > 0 && Math.floor(Math.random() * 100) < current.heat/1.5) {
-            var hit = this.Pick(hits);
 
-            var hitTile = this.GetTileAt(hit.pos)
-            // console.log(current);
-            // console.log(hit);
-            // console.log(hitTile);
-            // console.log(this.Flammability(hitTile));
-            var newHeatValue = Math.floor(this.Flammability(hitTile) * (hitTile.heat + Math.floor(current.heat/3)) - 3);
-            // console.log(this.Flammability(hitTile))
-            // var newHeatValue = Math.floor(current.heat/3);
-            if (hitTile.heat <= 0) {
-              // console.log("Hit a tile! its a new one!!" + newHeatValue)
 
-              // console.log(hitTile)
-              hitTile.cd = Math.floor(Math.random()*20);
-              hitTile.heat = newHeatValue;
+
+          if (hit !== undefined) {
+            var hitTile = this.map.GetTile(hit.pos);
+            var roll = Math.floor(Math.random() * 100);
+            if (distance > 0 && roll < hitTile.flammabilityMultiplier() * current.heat/2) {
+              var hitFireData = this.GetTileAt(hit.pos)
+
+              var newHeatValue = Math.floor(hitTile.flammabilityMultiplier() * (hitFireData.heat + Math.floor(current.heat/3)) - 3);
+              // console.log(this.Flammability(hitFireData))
+              // var newHeatValue = Math.floor(current.heat/3);
+              if (hitFireData.heat <= 0) {
+                // console.log("Hit a tile! its a new one!!" + newHeatValue)
+
+                // console.log(hitFireData)
+                hitFireData.cd = Math.floor(Math.random()*10);
+                hitFireData.heat = newHeatValue;
+              } else {
+                hitFireData.heat = newHeatValue;
+
+                // console.log("Hit a tile! its an old one.")
+              }
+
+              current.heat *= this.map.GetTile({x: x, y: y}).flammabilityMultiplier()
+              current.cd = Math.floor(Math.random()*10);
+              // GameMount.DoQuit();
+              // GameMount.SetNewInputHandler({});
             } else {
-              hitTile.heat = newHeatValue;
-
-              // console.log("Hit a tile! its an old one.")
+              var target = hitTile.flammabilityMultiplier() * current.heat/2
+              // console.log("got a hit, but it failed to catch (" + roll + ") / ("+ target+ ")");
+              // console.log();
             }
-
-            current.heat *= this.Flammability(current);
-            current.cd = Math.floor(Math.random()*20);
-            // GameMount.DoQuit();
-            // GameMount.SetNewInputHandler({});
           } else {
-            // console.log("NO HITS!");
+            // console.log("There were no available hits...?");
+            // console.log(hits.length)
+            // console.log(hits.map(h => this.map.GetTile(h.pos).flammabilitySquared()))
           }
         }
       }
