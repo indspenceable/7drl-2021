@@ -21,7 +21,7 @@ export default class MainMenu{
       }
     }
   }
-  Hover(pos){
+  Hover(terminal, pos){
 
   }
 

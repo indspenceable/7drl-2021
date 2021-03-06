@@ -35,14 +35,15 @@ class GameMount {
 
         const keyboard = new Input.KeyboardHandler();
         // keyboard.setContext(movement);
-        var quit = false;
+        var quit = 0;
+        this.DoQuit= function() {quit+=1;};
         this.SetNewInputHandler = function(NewInputHandler) {
             if (InstalledInputHandler != NewInputHandler) {
                 var movement = NewInputHandler.BuildKeyboardContext()
                     .onDown(Input.KeyCode.Escape, () => {quit = true});
                 keyboard.setContext(movement);
-                var mouseContext = NewInputHandler.BuildMouseContext();
-                mouse.setContext(mouseContext);
+                var mouseContext = NewInputHandler.BuildMouseContext(terminal);
+                mouse.setContext(mouseContext)
                 InstalledInputHandler = NewInputHandler;
             }
         }
@@ -52,14 +53,14 @@ class GameMount {
             terminal.clear();
             // Draw mouse position
             const mousePos = mouse.getPos();
-            InstalledInputHandler.Hover(mousePos);
+            InstalledInputHandler.Hover(terminal, mousePos);
 
             InstalledInputHandler.Render(terminal);
 
             // Render
             terminal.render();
 
-            if (!quit)
+            if (quit < 5)
                 currentRequestRef = requestAnimationFrame(loop);
             else {
                 keyboard.clearContext();
