@@ -4,17 +4,17 @@ import Util from './Util.js'
 const INITIAL_SPARK_COUNT = 4;
 const INITIAL_SPARK_HEAT = 20;
 const SMALL_THRESHOLD = 10;
-const LARGE_THRESHOLD = 40;
+const LARGE_THRESHOLD = 30;
 
 
 
 
 export default class FireManager {
-  constructor(map) {
-    this.map = map;
-    this.data = {};
+  constructor(floor) {
+    this.floor = floor;
+
     this.fov = new FOV.PreciseShadowcasting({
-      lightPasses: (pos) => !map.GetTile(pos).blocksFire,
+      lightPasses: (pos) => !this.floor.map.GetTile(pos).blocksFire,
       topology: "four",
       cartesianRange: true,
     });
@@ -46,64 +46,53 @@ export default class FireManager {
   LightRandomTile() {
     var dx = Math.floor(Math.random()*20);
     var dy = Math.floor(Math.random()*20);
-    this.GetTileAt({x:dx, y:dy}).heat = INITIAL_SPARK_HEAT;
-    return this.GetTileAt({x:dx, y:dy})
+    this.GetTile({x:dx, y:dy}).heat = INITIAL_SPARK_HEAT;
+    return this.GetTile({x:dx, y:dy})
   }
   Pick (items) {
     return items[Math.floor(Math.random() * items.length)];
   }
 
-  GetTileAt(pos) {
-    if (this.data[pos.x] === undefined)
-      this.data[pos.x] = {};
-    if (this.data[pos.x][pos.y] === undefined)
-      this.data[pos.x][pos.y] = {
-        x: pos.x,
-        y: pos.y,
+  GetTile(pos) {
+    var mapTile = this.floor.map.GetTile(pos)
+    if (mapTile.fire === undefined) {
+      mapTile.fire = {
         heat: 0,
         cd: 2,
-        seen: false
-      };
-    return this.data[pos.x][pos.y];
+      }
+    } else {
+
+    }
+    return mapTile.fire;
   }
 
 
-  Step() {
+  TimeStep(player) {
     // return;
     // if (this.data.length > 10000) return;
     // console.log(this.data);
-    for (var [x, yValues] of Object.entries(this.data)) {
-      for (var [y, current] of Object.entries(yValues)) {
+    for (var x = 0; x < this.floor.map.w; x += 1) {
+      for (var y = 0; y < this.floor.map.h; y +=1 ) {
+        var current = this.GetTile({x,y})
         if (current.heat > 80) current.heat = 80;
         if (current.heat < 10) continue;
 
         if (current.cd > 0) {
-          // console.log("curren ct is " + current.cd)
           current.cd -= 1;
         } else {
-          // console.log("Oyyy we spreading the fire!");
-          // var dx = Math.floor(Math.random()*5-2);
-          // var dy = Math.floor(Math.random()*5-2);
-          // var newX = current.x+dx;
-          // var newY = current.y+dy;
-
-
           var distance = Math.floor(current.heat / 9);
-          var hits = this.fov.calculateArray({x:current.x, y:current.y}, distance).filter(
-            hit => !this.map.GetTile(hit.pos).blocksFire &&
+          var hits = this.fov.calculateArray({x, y}, distance).filter(
+            hit => !this.floor.map.GetTile(hit.pos).blocksFire &&
               hit.r <= distance &&
-              ((hit.pos.x != current.x) || (hit.pos.y != current.y))
+              ((hit.pos.x != x) || (hit.pos.y != y))
           );
-          var hit = Util.WeightedPick(hits,(h) => this.map.GetTile(h.pos).flammabilitySquared())
-
-
-
+          var hit = Util.WeightedPick(hits,(h) => this.floor.map.GetTile(h.pos).flammabilitySquared())
 
           if (hit !== undefined) {
-            var hitTile = this.map.GetTile(hit.pos);
+            var hitTile = this.floor.map.GetTile(hit.pos);
             var roll = Math.floor(Math.random() * 100);
             if (distance > 0 && roll < hitTile.flammabilityMultiplier() * current.heat/2) {
-              var hitFireData = this.GetTileAt(hit.pos)
+              var hitFireData = this.GetTile(hit.pos)
 
               var newHeatValue = Math.floor(hitTile.flammabilityMultiplier() * (hitFireData.heat + Math.floor(current.heat/3)) - 3);
               // console.log(this.Flammability(hitFireData))
@@ -117,43 +106,34 @@ export default class FireManager {
               } else {
                 hitFireData.heat = newHeatValue;
 
-                // console.log("Hit a tile! its an old one.")
               }
 
-              current.heat *= this.map.GetTile({x: x, y: y}).flammabilityMultiplier()
+              current.heat *= this.floor.map.GetTile({x, y}).flammabilityMultiplier()
               current.cd = Math.floor(Math.random()*10);
-              // GameMount.DoQuit();
-              // GameMount.SetNewInputHandler({});
             } else {
               var target = hitTile.flammabilityMultiplier() * current.heat/2
-              // console.log("got a hit, but it failed to catch (" + roll + ") / ("+ target+ ")");
-              // console.log();
             }
-          } else {
-            // console.log("There were no available hits...?");
-            // console.log(hits.length)
-            // console.log(hits.map(h => this.map.GetTile(h.pos).flammabilitySquared()))
           }
         }
       }
     }
-    window.data = this.data
+
+    var playerHit = this.GetTile(player.pos)
+    player.currentHP -= playerHit.heat
   }
   FindTile() {
 
   }
 
   Render(terminal) {
-    // this.Step();
-    // for(var t of this.litTiles) {
-    //   terminal.drawGlyph(t.pos, new Glyph("*"));
-    // }
-    for (var [x, yValues] of Object.entries(this.data)) {
-      for (var [y, current] of Object.entries(yValues)) {
-        if (current.heat < 5) {}
-        else if (current.heat < SMALL_THRESHOLD) terminal.drawGlyph(current, this.Pick(this.smallGlyph));
-        else if (current.heat < LARGE_THRESHOLD) terminal.drawGlyph(current, this.Pick(this.medGlyph));
-        else                        terminal.drawGlyph(current, this.Pick(this.largeGlyph));
+    for (var x = 0; x < this.floor.map.w; x += 1) {
+      for (var y = 0; y < this.floor.map.h; y +=1 ) {
+        var current = this.GetTile({x,y})
+
+        if (current.heat < 1) {}
+        else if (current.heat < SMALL_THRESHOLD) terminal.drawGlyph({x,y}, this.Pick(this.smallGlyph));
+        else if (current.heat < LARGE_THRESHOLD) terminal.drawGlyph({x,y}, this.Pick(this.medGlyph));
+        else                                     terminal.drawGlyph({x,y}, this.Pick(this.largeGlyph));
       }
     }
   }

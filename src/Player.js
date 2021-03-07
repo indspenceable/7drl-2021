@@ -18,6 +18,8 @@ export default class Player {
       topology: "eight",
       cartesianRange: true,
     });
+
+    this.currentHP = 100;
   }
   Hover(terminal, pos) {
     var tPos = terminal.pixelToChar(pos);
@@ -39,20 +41,37 @@ export default class Player {
       inBounds: this.game.GetCurrentFloor().map.InBounds(tPos)
     }
     if (this.hover.inRange && this.hover.inSight && this.hover.inBounds) {
-      //
+      this.ShootWater(tPos)
     }
   }
-  Render(terminal) {
-    var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, 30)
 
-    for (var i = 0; i < this.game.GetCurrentFloor().map.w; i += 1) {
-      for (var j = 0; j < this.game.GetCurrentFloor().map.h; j += 1) {
-        if (visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
-          terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
+  ShootWater(tPos) {
+    console.log("shooting water!");
+    var cf = this.game.GetCurrentFloor()
+    for (var i = -1; i < 2; i += 1) {
+      for (var j = -1; j < 2; j += 1) {
+        if (cf.map.InBounds(tPos)) {
+          var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
+          tile.fire.heat -= 5;
         }
       }
     }
+  }
 
+
+  TimeStep() {
+
+  }
+  Render(terminal) {
+    // var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, 30)
+
+    // for (var i = 0; i < this.game.GetCurrentFloor().map.w; i += 1) {
+    //   for (var j = 0; j < this.game.GetCurrentFloor().map.h; j += 1) {
+    //     if (visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
+    //       terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
+    //     }
+    //   }
+    // }
 
     // var color = Color.Red
     if (this.hover.inRange && this.hover.inSight && this.hover.inBounds) {
@@ -64,5 +83,7 @@ export default class Player {
       }
     }
     terminal.drawGlyph(this.pos, PlayerGlyph);
+
+    terminal.writeAt({x:31, y:0}, "hp: " + this.currentHP + "/ 100");
   }
 }

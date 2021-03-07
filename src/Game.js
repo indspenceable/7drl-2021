@@ -6,8 +6,8 @@ import Player from './Player.js'
 
 class Floor {
   constructor() {
-    this.map = new LevelMap(40, 30, 14);
-    this.fire = new FireManager(this.map);
+    this.map = new LevelMap(30, 30, 14);
+    this.fire = new FireManager(this);
     this.systems = [this.fire];
   }
   Foo(){}
@@ -54,24 +54,9 @@ export default class Game{
     var systems = this.GetCurrentFloor().systems;
     for (var i = 0; i < systems.length; i +=1) {
       var system = systems[i];
-      system.Step();
+      system.TimeStep(this.player);
     }
-  }
-
-  ShootWater(terminal, pos) {
-    var tPos = terminal.pixelToChar(pos);
-    // console.log(tPos);
-    // console.log(pos);
-    for (var i = -1; i < 2; i += 1) {
-      for (var j = -1; j < 2; j += 1) {
-        var cf = this.GetCurrentFloor()
-        if (cf.map.InBounds(tPos)) {
-          var tile = cf.fire.GetTileAt({x: tPos.x+i, y: tPos.y+j});
-          tile.heat -= 5;
-        }
-      }
-    }
-    cf.fire.Step();
+    this.player.TimeStep();
   }
 
 
@@ -89,7 +74,7 @@ export default class Game{
         }
       }
     }
-    // cf.fire.Step();
+    // cf.fire.TimeStep();
   }
 
   BuildKeyboardContext() {
