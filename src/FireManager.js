@@ -22,7 +22,7 @@ export default class FireManager {
     for (var i = 0; i< INITIAL_SPARK_COUNT; i+=1) {
         litTile = this.LightRandomTile();
     }
-    this.litTiles = this.fov.calculateArray({x:litTile.x, y:litTile.y}, 5);
+    // this.litTiles = this.fov.calculateArray({x:litTile.x, y:litTile.y}, 5);
 
 
 
@@ -86,7 +86,7 @@ export default class FireManager {
           // var dy = Math.floor(Math.random()*5-2);
           // var newX = current.x+dx;
           // var newY = current.y+dy;
-          window.fov  = this.fov;
+
 
           var distance = Math.floor(current.heat / 9);
           var hits = this.fov.calculateArray({x:current.x, y:current.y}, distance).filter(

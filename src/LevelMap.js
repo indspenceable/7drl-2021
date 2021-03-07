@@ -9,6 +9,20 @@ var FLOOR_OPTS = {
   blocksFire: false,
 }
 
+var DOWNSTAIRS_OPTS = {
+  glyph: new Glyph('>', Color.Red),
+  flammability: 0,
+  blocksMovement: false,
+  blocksFire: true,
+}
+
+var UPSTAIRS_OPTS = {
+  glyph: new Glyph('<', Color.Green),
+  flammability: 0,
+  blocksMovement: false,
+  blocksFire: true,
+}
+
 var DOOR_OPTS = {
   glyph: new Glyph('+'),
   flammability: 100,
@@ -36,13 +50,26 @@ export default class LevelMap {
     this.w = w;
     this.h = h;
     this.builder = new LevelMapBuilder(w, h, iterations);
+
+    this.upstairs = null;
+    this.downstairs = null;
+    while (this.upstairs == this.downstairs) {
+      this.upstairs = this.builder.RandomFloor();
+      this.downstairs = this.builder.RandomFloor();
+    }
+
     this.tiles = {}
     for (var i = 0; i < w; i += 1) {
       this.tiles[i] = {}
       for (var j = 0; j < h; j += 1) {
         var v2 = {x:i, y:j}
         var opts = WALL_OPTS
-        if (this.builder.IsFloor(v2)) {
+        if (v2.x == this.upstairs.x && v2.y == this.upstairs.y) {
+          opts = UPSTAIRS_OPTS
+        } else if (v2.x == this.downstairs.x && v2.y == this.downstairs.y) {
+          opts = DOWNSTAIRS_OPTS
+        }
+        else if (this.builder.IsFloor(v2)) {
           opts = FLOOR_OPTS
         } else if (this.builder.IsDoor(v2)) {
           opts = DOOR_OPTS
@@ -89,7 +116,7 @@ class LevelMapBuilder {
     this.w = w;
     this.h = h;
     this.rooms = [
-      {x:0,y:0,w:this.w,h:this.h}
+      {x:1,y:1,w:this.w-3,h:this.h-3}
     ]
     this.doors = []
     for (var i = 0; i < iterations; i += 1) {
@@ -196,6 +223,13 @@ class LevelMapBuilder {
       }
     }
   }
+
+  RandomFloor() {
+    var x = Math.floor(Math.random() * this.w)
+    var y = Math.floor(Math.random() * this.h)
+    return {x, y}
+  }
+
   IsFloor(pos) {
     return this.rooms.some(r =>
       r.x <= pos.x  && r.x + r.w >= pos.x &&

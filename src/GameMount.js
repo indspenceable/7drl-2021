@@ -54,7 +54,6 @@ class GameMount {
             // Draw mouse position
             const mousePos = mouse.getPos();
             InstalledInputHandler.Hover(terminal, mousePos);
-
             InstalledInputHandler.Render(terminal);
 
             // Render

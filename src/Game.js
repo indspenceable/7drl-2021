@@ -1,10 +1,12 @@
-import { Glyph, Color, Terminal, Input } from "malwoden";
+import { Glyph, Input, FOV } from "malwoden";
 import FireManager from './FireManager.js'
 import LevelMap from './LevelMap.js'
+import Util from './Util.js'
+import Player from './Player.js'
 
 class Floor {
   constructor() {
-    this.map = new LevelMap(20, 20, 7);
+    this.map = new LevelMap(40, 30, 14);
     this.fire = new FireManager(this.map);
     this.systems = [this.fire];
   }
@@ -17,9 +19,11 @@ export default class Game{
       new Floor()
     ]
     this.currentFloor = 0;
+    this.player = new Player(this.GetCurrentFloor().map.upstairs, this);
+    // this.ppos =
   }
   Hover(terminal, pos) {
-    var tPos = terminal.pixelToChar(pos);
+    this.player.Hover(terminal, pos)
   }
 
   GetCurrentFloor() {
@@ -27,15 +31,27 @@ export default class Game{
   }
 
   Render(terminal) {
-    this.GetCurrentFloor().map.Render(terminal)
-    var systems = this.floors[this.currentFloor].systems;
+    var cf = this.GetCurrentFloor();
+    cf.map.Render(terminal)
+    var systems = cf.systems;
     for (var i = 0; i < systems.length; i +=1) {
       var system = systems[i];
       system.Render(terminal);
     }
+    this.player.Render(terminal);
   }
   attemptMove(dx, dy) {
-    var systems = this.floors[this.currentFloor].systems;
+    var cf = this.GetCurrentFloor();
+    var ppos = this.player.pos;
+    var ttile = {x: ppos.x + dx, y: ppos.y + dy}
+    if (!cf.map.GetTile(ttile).blocksMovement) {
+      this.player.pos = ttile;
+      this.TimeStep();
+    }
+  }
+
+  TimeStep() {
+    var systems = this.GetCurrentFloor().systems;
     for (var i = 0; i < systems.length; i +=1) {
       var system = systems[i];
       system.Step();
@@ -48,12 +64,10 @@ export default class Game{
     // console.log(pos);
     for (var i = -1; i < 2; i += 1) {
       for (var j = -1; j < 2; j += 1) {
-        var cf = this.floors[this.currentFloor]
+        var cf = this.GetCurrentFloor()
         if (cf.map.InBounds(tPos)) {
           var tile = cf.fire.GetTileAt({x: tPos.x+i, y: tPos.y+j});
-          console.log(tile);
           tile.heat -= 5;
-          console.log(cf.fire.GetTileAt({x: tPos.x+i, y: tPos.y+j}));
         }
       }
     }
@@ -83,12 +97,17 @@ export default class Game{
       .onDown(Input.KeyCode.DownArrow, () => this.attemptMove(0, 1))
       .onDown(Input.KeyCode.LeftArrow, () => this.attemptMove(-1, 0))
       .onDown(Input.KeyCode.RightArrow, () => this.attemptMove(1, 0))
-      .onDown(Input.KeyCode.Space, () => this.attemptMove(0, 0))
       .onDown(Input.KeyCode.UpArrow, () => this.attemptMove(0, -1))
-      .onDown(Input.KeyCode.Space,() => this.floors[this.currentFloor].fire.Step());
+      .onDown(Input.KeyCode.S, () => this.attemptMove(0, 1))
+      .onDown(Input.KeyCode.A, () => this.attemptMove(-1, 0))
+      .onDown(Input.KeyCode.D, () => this.attemptMove(1, 0))
+      .onDown(Input.KeyCode.W, () => this.attemptMove(0, -1))
+      .onDown(Input.KeyCode.Space, () => this.attemptMove(0, 0))
+      .onDown(Input.KeyCode.Period, () => this.attemptMove(0, 0))
   }
   BuildMouseContext(terminal) {
     return new Input.MouseContext()
-    .onMouseDown((pos) => this.ShootOil(terminal, pos));
+      .onMouseDown((pos) => this.player.mouseDown(terminal, pos))
+    ;
   }
 }
