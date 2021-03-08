@@ -1,0 +1,33 @@
+import Util from './Util.js'
+import FireManager from './FireManager.js'
+import LevelMap from './LevelMap.js'
+import RescuesManager from './RescuesManager.js'
+import ExplosivesManager from './ExplosivesManager.js'
+
+export default class Floor {
+  constructor(opts) {
+    this.opts = {...opts}
+    this.map = new LevelMap(this);
+    this.fire = new FireManager(this);
+    this.rescues = new RescuesManager(this);
+    this.explosives = new ExplosivesManager(this);
+    this.systems = [this.fire, this.rescues, this.explosives];
+  }
+  Render(terminal, player) {
+    for (var i = 0; i < this.map.w; i += 1) {
+      for (var j = 0; j < this.map.h; j += 1) {
+        var v2 = {x:i, y:j};
+        if (!player.game.opts.fov || player.visibleTiles.some(h => Util.EqPt(h.pos, v2))) {
+          var current = this.map.GetTile(v2);
+          if (current.glyph !== undefined) {
+            terminal.drawGlyph(v2, current.glyph);
+          } else {
+            terminal.drawGlyph(v2, current.dynamicGlyph());
+          }
+        } else {
+          // terminal.drawGlyph(v2, new Glyph("V"));
+        }
+      }
+    }
+  }
+}

@@ -8,8 +8,10 @@ var OPTS_NO_FOV = {
     w: 25,
     h: 30,
     iterations: 8,
+    rescues:3,
   },
-  fov: false
+  fov: false,
+  scaling: 2,
 
 }
 var OPTS_YES_FOV = {
@@ -17,12 +19,21 @@ var OPTS_YES_FOV = {
   fov: true,
 }
 
+var FAST_SCALING = {
+  ...OPTS_YES_FOV,
+  fov: true,
+  floors: 5,
+  scaling: 2,
+}
+
+
 export default class MainMenu{
   constructor() {
     this.selection = 0;
     this.options = [
       {label: "5 Stories,  no fov", cb: () => this.NewGame(OPTS_NO_FOV)},
-      {label: "5 Stories, yes fov", cb: () => this.NewGame(OPTS_YES_FOV)}
+      {label: "5 Stories, yes fov", cb: () => this.NewGame(OPTS_YES_FOV)},
+      {label: "Faster scaling    ", cb: () => this.NewGame(FAST_SCALING)}
     ]
   }
 

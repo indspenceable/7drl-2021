@@ -9,6 +9,7 @@ export default class Player {
 
 
   constructor(pos, game) {
+    this.priority = 100;
     this.pos = pos
     this.hover = {
       inRange: false,
@@ -42,6 +43,7 @@ export default class Player {
       }
       ];
     this.currentWeapon = 0;
+    this.rescues = 0
   }
 
 
@@ -115,14 +117,18 @@ export default class Player {
     return this.weapons[this.currentWeapon];
   }
 
+  calculateVisibleTiles() {
+    if (this.game.opts.fov) {
+      this.visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, 30)
+    }
+  }
+
   Render(terminal) {
     var cf = this.game.GetCurrentFloor()
     if (this.game.opts.fov) {
-      var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, 30)
-
       for (var i = 0; i < cf.map.w; i += 1) {
         for (var j = 0; j < cf.map.h; j += 1) {
-          if (visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
+          if (this.visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
             terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
           }
         }
@@ -148,7 +154,7 @@ export default class Player {
     terminal.writeAt({x:33, y:2}, " " + this.remainingWater + "/ 20", Color.Green);
     terminal.writeAt({x:27, y:3}, "nozzle: ")
     terminal.writeAt({x:35, y:3}, this.equippedWeapon().desc);
-    terminal.writeAt({x:27, y:5}, "civs:")
+    terminal.writeAt({x:27, y:5}, "civs: " + this.rescues);
 
     terminal.writeAt({x:27, y:8}, "-----------------");
     terminal.writeAt({x:26, y:9}, "target:")

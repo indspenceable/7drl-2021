@@ -5,7 +5,7 @@ import Tile from './Tile.js'
 var FLOOR_OPTS = {
   terrain: '.',
   desc: 'open floor',
-  flammability: 100,
+  flammability: 110,
   blocksMovement: false,
   blocksFire: false,
   blocksSight: false
@@ -39,7 +39,7 @@ var DOOR_OPTS = {
 var WALL_OPTS = {
   ...FLOOR_OPTS,
   terrain: '#',
-  desc: 'a wall',
+  desc: 'stone wall',
   glyph: new Glyph('#'),
   flammability: 15,
   blocksMovement: true,
@@ -110,16 +110,6 @@ export default class LevelMap {
   }
   Blocked(pos) {
     return !this.InBounds(pos) || this.GetTile(pos).opts.blocksMovement;
-  }
-
-  Render(terminal) {
-    for (var i = 0; i < this.w; i += 1) {
-      for (var j = 0; j < this.h; j += 1) {
-        var v2 = {x:i, y:j};
-        var current = this.GetTile(v2);
-        terminal.drawGlyph(v2, current.glyph);
-      }
-    }
   }
 }
 

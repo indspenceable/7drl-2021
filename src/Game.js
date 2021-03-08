@@ -1,36 +1,12 @@
 import { Glyph, Input, FOV } from "malwoden";
-import FireManager from './FireManager.js'
-import LevelMap from './LevelMap.js'
-import Util from './Util.js'
-import Player from './Player.js'
 
-class Floor {
-  constructor(opts) {
-    this.opts = {...opts}
-    this.map = new LevelMap(this);
-    this.fire = new FireManager(this);
-    this.systems = [this.fire];
-  }
-  Render(terminal) {
-    for (var i = 0; i < this.map.w; i += 1) {
-      for (var j = 0; j < this.map.h; j += 1) {
-        var v2 = {x:i, y:j};
-        var current = this.map.GetTile(v2);
-        if (current.glyph !== undefined) {
-          terminal.drawGlyph(v2, current.glyph);
-        } else {
-          terminal.drawGlyph(v2, current.dynamicGlyph());
-        }
-      }
-    }
-  }
-}
+import Player from './Player.js'
+import Floor from './Floor.js'
 
 export default class Game{
   constructor(opts) {
     this.opts = {...opts}
-    this.floors = [
-    ]
+    this.floors = []
     for (var i = 0; i < opts.floors; i += 1) {
       this.floors.push(new Floor({...opts.floor, heat:i}))
     }
@@ -50,29 +26,44 @@ export default class Game{
 
   glyphFor(tile) {}
 
+  SortedSystems() {
+    var [...systems] = this.GetCurrentFloor().systems;
+    systems.push(this.player);
+    systems.sort((a,b) => {
+      if (a.priority < b.priority) {
+        return -1;
+      } else if (a.priority > b.priority) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+    return systems;
+  }
+
   Render(terminal) {
+    this.player.calculateVisibleTiles()
+
     var cf = this.GetCurrentFloor();
-
     // render the map
-    cf.Render(terminal);
+    cf.Render(terminal, this.player);
 
-    var systems = cf.systems;
+    var systems = this.SortedSystems();
     for (var i = 0; i < systems.length; i +=1) {
       var system = systems[i];
       system.Render(terminal);
     }
-    this.player.Render(terminal);
   }
 
 
   TimeStep(count = 1) {
     for (var j = 0; j < count ;j += 1) {
-      var systems = this.GetCurrentFloor().systems;
+      var systems = this.SortedSystems();
       for (var i = 0; i < systems.length; i +=1) {
         var system = systems[i];
         system.TimeStep(this.player);
       }
-      this.player.TimeStep();
+      // this.player.TimeStep();
     }
   }
 
