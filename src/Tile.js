@@ -4,39 +4,33 @@ import ColorUtil from './ColorUtil.js'
 
 export default class Tile {
   constructor(opts) {
-    this.terrain = opts.terrain;
+    this.opts = {...opts}
     this.glyph = opts.glyph;
-    this.flammability = opts.flammability
-    this.blocksMovement = opts.blocksMovement
-    this.blocksFire = opts.blocksFire
     this.fire = {
       heat: 0,
       cd: 1,
+      damp: 0,
     }
   }
   flammabilityMultiplier() {
-    return this.flammability/100;
+    return this.opts.flammability/100;
   }
   flammabilitySquared() {
-    return this.flammability * this.flammability
+    return this.opts.flammability * this.opts.flammability
   }
 
   dynamicGlyph() {
     var c = Color.White;
-    var g = this.terrain;
-    if (this.fire.heat > 1){
-      var choice = Util.Pick([Color.Red, Color.Yellow, Color.Orange]);
+    var g = this.opts.terrain;
+    if (this.fire.heat > 0){
+      var choice = Util.Pick([Color.Red, Color.Yellow, Color.Orange, Color.DarkOrange, Color.OrangeRed]);
       var [h,s,v] = ColorUtil.rgbToHsv(choice.r, choice.g, choice.b)
-
-      // v = 0.25
-      // 1-v = 0.75
-      // (1-v)/2 = 0.375
-      // (1-((1-v)/2)) = 0.625 (+0.51)
-
       v = v * ((2*this.fire.heat/100) + 0.25)
       c = new Color(...ColorUtil.hsvToRgb(h,s,v))
       g = '^';
-
+    } else if (this.fire.damp > 0) {
+      // g = '%'
+      c = Color.Blue
     }
     return new Glyph(g, c)
   }

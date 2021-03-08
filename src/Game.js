@@ -7,7 +7,7 @@ import Player from './Player.js'
 class Floor {
   constructor(opts) {
     this.opts = {...opts}
-    this.map = new LevelMap(30, 20, 8);
+    this.map = new LevelMap(this);
     this.fire = new FireManager(this);
     this.systems = [this.fire];
   }
@@ -78,19 +78,19 @@ export default class Game{
 
 
   ShootOil(terminal, pos) {
-    var tPos = terminal.pixelToChar(pos);
+    // var tPos = terminal.pixelToChar(pos);
 
-    var radius = 0;
-    for (var i = -radius; i < 1+radius; i += 1) {
-      for (var j = -radius; j < 1+radius; j += 1) {
-        var cf = this.floors[this.currentFloor]
-        if (cf.map.InBounds(tPos)) {
-          var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
-          tile.glyph = new Glyph("_");
-          tile.flammability = 200;
-        }
-      }
-    }
+    // var radius = 0;
+    // for (var i = -radius; i < 1+radius; i += 1) {
+    //   for (var j = -radius; j < 1+radius; j += 1) {
+    //     var cf = this.floors[this.currentFloor]
+    //     if (cf.map.InBounds(tPos)) {
+    //       var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
+    //       tile.glyph = new Glyph("_");
+    //       // tile.flammability = 200;
+    //     }
+    //   }
+    // }
     // cf.fire.TimeStep();
   }
 
@@ -104,9 +104,14 @@ export default class Game{
       .onDown(Input.KeyCode.A,          () => this.player.attemptMove(-1, 0))
       .onDown(Input.KeyCode.D,          () => this.player.attemptMove(1, 0))
       .onDown(Input.KeyCode.W,          () => this.player.attemptMove(0, -1))
-      .onDown(Input.KeyCode.Space,      () => this.player.attemptMove(0, 0))
-      .onDown(Input.KeyCode.Period,     () => this.player.attemptMove(0, 0))
+
+      .onDown(Input.KeyCode.Space,      () => this.TimeStep( 1))
+      .onDown(Input.KeyCode.Period,     () => this.TimeStep( 1))
       .onDown(Input.KeyCode.Five,       () => this.TimeStep(50))
+
+      .onDown(Input.KeyCode.Q,          () => this.player.changeWeapon( 1))
+      .onDown(Input.KeyCode.E,          () => this.player.changeWeapon(-1))
+
   }
   BuildMouseContext(terminal) {
     return new Input.MouseContext()

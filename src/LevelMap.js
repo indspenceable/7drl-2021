@@ -4,15 +4,17 @@ import Tile from './Tile.js'
 
 var FLOOR_OPTS = {
   terrain: '.',
+  desc: 'open floor',
   flammability: 100,
   blocksMovement: false,
   blocksFire: false,
-  blocksSight: true
+  blocksSight: false
 }
 
 var DOWNSTAIRS_OPTS = {
   ...FLOOR_OPTS,
   terrain: '>',
+  desc: 'stairs onward',
   glyph: new Glyph('>', Color.Red),
   flammability: 0,
 }
@@ -20,6 +22,7 @@ var DOWNSTAIRS_OPTS = {
 var UPSTAIRS_OPTS = {
   ...FLOOR_OPTS,
   terrain: '<',
+  desc: 'stairs back',
   glyph: new Glyph('<', Color.Green),
   flammability: 0,
 }
@@ -27,15 +30,18 @@ var UPSTAIRS_OPTS = {
 var DOOR_OPTS = {
   ...FLOOR_OPTS,
   terrain: '>',
+  desc: 'a door',
   glyph: new Glyph('+', Color.Brown),
+  blocksSight: true
 }
 
 
 var WALL_OPTS = {
   ...FLOOR_OPTS,
   terrain: '#',
+  desc: 'a wall',
   glyph: new Glyph('#'),
-  flammability: 5,
+  flammability: 15,
   blocksMovement: true,
   blocksFire: true,
   blocksSight: true
@@ -43,6 +49,7 @@ var WALL_OPTS = {
 
 var OOB_OPTS = {
   terrain: '?',
+  desc: '???',
   glyph: new Glyph('?'),
   flammability: 0,
   blocksMovement: true,
@@ -51,10 +58,12 @@ var OOB_OPTS = {
 }
 
 export default class LevelMap {
-  constructor(w, h, iterations){
-    this.w = w;
-    this.h = h;
-    this.builder = new LevelMapBuilder(w, h, iterations);
+  constructor(floor){
+    window.floor = floor
+    this.floor = floor
+    this.w = floor.opts.w;
+    this.h = floor.opts.h;
+    this.builder = new LevelMapBuilder(this.w, this.h, floor.opts.iterations);
 
     this.upstairs = null;
     this.downstairs = null;
@@ -62,11 +71,10 @@ export default class LevelMap {
       this.upstairs = this.builder.RandomFloor();
       this.downstairs = this.builder.RandomFloor();
     }
-
     this.tiles = {}
-    for (var i = 0; i < w; i += 1) {
+    for (var i = 0; i < this.w; i += 1) {
       this.tiles[i] = {}
-      for (var j = 0; j < h; j += 1) {
+      for (var j = 0; j < this.h; j += 1) {
         var v2 = {x:i, y:j}
         var opts = WALL_OPTS
         if (Util.EqPt(v2, this.upstairs))
@@ -101,7 +109,7 @@ export default class LevelMap {
     return pos.x >= 0 && pos.y >= 0 && pos.x < this.w && pos.y < this.h;
   }
   Blocked(pos) {
-    return !this.InBounds(pos) || this.GetTile(pos).blocksMovement;
+    return !this.InBounds(pos) || this.GetTile(pos).opts.blocksMovement;
   }
 
   Render(terminal) {

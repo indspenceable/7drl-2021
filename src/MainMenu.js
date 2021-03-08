@@ -5,6 +5,9 @@ import GameMount from './GameMount.js'
 var OPTS_NO_FOV = {
   floors: 5,
   floor: {
+    w: 25,
+    h: 30,
+    iterations: 8,
   },
   fov: false
 

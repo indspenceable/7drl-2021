@@ -1,12 +1,15 @@
 import { Glyph, Color, Input, FOV } from "malwoden";
 import Util from './Util.js'
-
 var PlayerGlyph = new Glyph("@", Color.Yellow)
 
+
+
 export default class Player {
+
+
+
   constructor(pos, game) {
     this.pos = pos
-    this.attackRange = 5;
     this.hover = {
       inRange: false,
       target: pos
@@ -14,37 +17,54 @@ export default class Player {
     this.game = game
 
     this.losCheck = new FOV.PreciseShadowcasting({
-      lightPasses: (pos) => !this.game.GetCurrentFloor().map.GetTile(pos).blocksMovement,
+      lightPasses: (pos) => {
+        return !this.game.GetCurrentFloor().map.GetTile(pos).opts.blocksSight
+      },
       topology: "eight",
       cartesianRange: true,
     });
 
     this.currentHP = 100;
-    this.remainingWater = 10;
+    this.remainingWater = 20;
+
+    this.weapons = [
+      {
+        desc:"focused",
+        power: 10,
+        radius: 0,
+        range: 20,
+      },
+      {
+        desc:"spray",
+        power: 4,
+        radius: 2,
+        range: 10
+      }
+      ];
+    this.currentWeapon = 0;
   }
+
+
+
+  //
   Hover(terminal, pos) {
     var tPos = terminal.pixelToChar(pos);
-    var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, this.attackRange)
+    var visibleTiles = this.losCheck.calculateArray(this.pos, 50)
+    var weapon = this.equippedWeapon();
     this.hover = {
-      inRange: Util.distance(tPos, this.pos)<this.attackRange,
+      inRange: Util.distance(tPos, this.pos) < weapon.range,
       target: tPos,
-      inSight: visibleTiles.find(hit => hit.pos.x == tPos.x && hit.pos.y == tPos.y),
+      inSight: visibleTiles.find(hit => Util.EqPt(hit.pos, tPos)) !== undefined,
       inBounds: this.game.GetCurrentFloor().map.InBounds(tPos)
     }
   }
   mouseDown(terminal, pos) {
     var tPos = terminal.pixelToChar(pos);
-    var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, this.attackRange)
-    this.hover = {
-      inRange: Util.distance(tPos, this.pos)<this.attackRange,
-      target: tPos,
-      inSight: visibleTiles.find(hit => hit.pos.x == tPos.x && hit.pos.y == tPos.y),
-      inBounds: this.game.GetCurrentFloor().map.InBounds(tPos)
-    }
+    var weapon = this.equippedWeapon();
     if (this.hover.inRange && this.hover.inSight && this.hover.inBounds) {
       if (this.remainingWater > 0) {
         this.remainingWater -= 1;
-        this.ShootWater(tPos)
+        this.ShootWater(tPos, weapon.radius, weapon.power)
         this.game.TimeStep()
       }
     }
@@ -53,7 +73,7 @@ export default class Player {
   attemptMove(dx, dy) {
     var cf = this.game.GetCurrentFloor();
     var ttile = {x: this.pos.x + dx, y: this.pos.y + dy}
-    if (!cf.map.GetTile(ttile).blocksMovement) {
+    if (!cf.map.GetTile(ttile).opts.blocksMovement) {
       if (Util.EqPt(ttile, cf.map.downstairs)){
         this.game.currentFloor += 1;
         // console.log(this.game.GetCurrentFloor().map.upstairs)
@@ -65,14 +85,19 @@ export default class Player {
     }
   }
 
-  ShootWater(tPos) {
+  ShootWater(tPos, radius, power) {
+    // console("Gifre!");
     var cf = this.game.GetCurrentFloor()
-    for (var i = -1; i < 2; i += 1) {
-      for (var j = -1; j < 2; j += 1) {
-        if (cf.map.InBounds(tPos)) {
+    for (var i = -radius; i <= radius; i += 1) {
+      for (var j = -radius; j <= radius; j += 1) {
+        if (cf.map.InBounds(tPos) && Math.abs(i) + Math.abs(j) <= radius) {
           var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
-          tile.fire.heat -= 1;
-          if (tile.fire.heat < 0) tile.fire.heat = 0;
+          if (tile.fire.heat < power) {
+            tile.fire.heat = 0
+            tile.fire.damp = power-tile.fire.heat
+          } else {
+            tile.fire.heat -= power;
+          }
         }
       }
     }
@@ -82,12 +107,21 @@ export default class Player {
   TimeStep() {
 
   }
+
+  changeWeapon(delta) {
+    this.currentWeapon = (this.currentWeapon + this.weapons.length + delta) % this.weapons.length
+  }
+  equippedWeapon() {
+    return this.weapons[this.currentWeapon];
+  }
+
   Render(terminal) {
+    var cf = this.game.GetCurrentFloor()
     if (this.game.opts.fov) {
       var visibleTiles = this.losCheck.calculateArray({x:this.pos.x, y:this.pos.y}, 30)
 
-      for (var i = 0; i < this.game.GetCurrentFloor().map.w; i += 1) {
-        for (var j = 0; j < this.game.GetCurrentFloor().map.h; j += 1) {
+      for (var i = 0; i < cf.map.w; i += 1) {
+        for (var j = 0; j < cf.map.h; j += 1) {
           if (visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
             terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
           }
@@ -95,18 +129,36 @@ export default class Player {
       }
     }
 
-    // var color = Color.Red
+    // if  its in range, draw the attack line
     if (this.hover.inRange && this.hover.inSight && this.hover.inBounds) {
       // color = Color.Green
       var line = Util.lineBetween(this.pos, this.hover.target);
       for(var i = 0 ; i < line.length; i +=1) {
         var current = line[i];
-        terminal.drawGlyph(current, new Glyph('+', Color.Green))
+        terminal.drawGlyph(current, new Glyph('o', Color.Green))
       }
     }
     terminal.drawGlyph(this.pos, PlayerGlyph);
 
-    terminal.writeAt({x:31, y:0}, "hp: " + this.currentHP + "/ 100");
-    terminal.writeAt({x:31, y:1}, "h2o:" + this.remainingWater);
+    terminal.writeAt({x:26, y:0}, "vitals:");
+    terminal.writeAt({x:27, y:1}, "hp:");
+    terminal.writeAt({x:33, y:1}, "" + this.currentHP + "/100", Color.Green);
+
+    terminal.writeAt({x:27, y:2}, "h2o:");
+    terminal.writeAt({x:33, y:2}, " " + this.remainingWater + "/ 20", Color.Green);
+    terminal.writeAt({x:27, y:3}, "nozzle: ")
+    terminal.writeAt({x:35, y:3}, this.equippedWeapon().desc);
+    terminal.writeAt({x:27, y:5}, "civs:")
+
+    terminal.writeAt({x:27, y:8}, "-----------------");
+    terminal.writeAt({x:26, y:9}, "target:")
+    if (this.game.opts.fov && !this.hover.inSight) {
+      terminal.writeAt({x:27, y:10}, "can't see!")
+    } else {
+      var hoverTarget = cf.map.GetTile(this.hover.target);
+      terminal.writeAt({x:27, y:10}, "terrain: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:27, y:11}, "heat:" + hoverTarget.fire.heat)
+      terminal.writeAt({x:27, y:12}, "damp:" + hoverTarget.fire.damp)
+    }
   }
 }

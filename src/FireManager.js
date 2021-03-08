@@ -2,14 +2,14 @@ import { Glyph, Color, Terminal, FOV, Input } from "malwoden";
 import Util from './Util.js'
 
 const INITIAL_SPARK_COUNT = 4;
-const INITIAL_SPARK_HEAT = 20;
+const INITIAL_SPARK_HEAT = 30;
 
 export default class FireManager {
   constructor(floor) {
     this.floor = floor;
 
     this.fov = new FOV.PreciseShadowcasting({
-      lightPasses: (pos) => !this.floor.map.GetTile(pos).blocksFire,
+      lightPasses: (pos) => !this.floor.map.GetTile(pos).opts.blocksFire,
       topology: "four",
       cartesianRange: true,
     });
@@ -59,7 +59,7 @@ export default class FireManager {
         } else {
           var distance = Math.floor(current.heat / 9);
           var hits = this.fov.calculateArray({x, y}, distance).filter(
-            hit => !this.floor.map.GetTile(hit.pos).blocksFire &&
+            hit => !this.floor.map.GetTile(hit.pos).opts.blocksFire &&
               hit.r <= distance &&
               ((hit.pos.x != x) || (hit.pos.y != y))
           );
@@ -72,17 +72,15 @@ export default class FireManager {
               var hitFireData = this.GetTile(hit.pos)
 
               var newHeatValue = Math.floor(hitTile.flammabilityMultiplier() * (hitFireData.heat + Math.floor(current.heat/3)) - 3);
-              // console.log(this.Flammability(hitFireData))
-              // var newHeatValue = Math.floor(current.heat/3);
-              if (hitFireData.heat <= 0) {
-                // console.log("Hit a tile! its a new one!!" + newHeatValue)
-
-                // console.log(hitFireData)
-                hitFireData.cd = Math.floor(Math.random()*10);
-                hitFireData.heat = newHeatValue;
+              if (newHeatValue <= hitFireData.damp) {
+                hitFireData.damp -= newHeatValue;
               } else {
+                newHeatValue -= hitFireData.damp
+                hitFireData.damp = 0
+                if (hitFireData.heat <= 0) {
+                  hitFireData.cd = Math.floor(Math.random()*10);
+                }
                 hitFireData.heat = newHeatValue;
-
               }
 
               current.heat *= this.floor.map.GetTile({x, y}).flammabilityMultiplier()
