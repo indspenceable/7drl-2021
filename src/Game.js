@@ -5,22 +5,38 @@ import Util from './Util.js'
 import Player from './Player.js'
 
 class Floor {
-  constructor() {
-    this.map = new LevelMap(30, 30, 14);
+  constructor(opts) {
+    this.opts = {...opts}
+    this.map = new LevelMap(30, 20, 8);
     this.fire = new FireManager(this);
     this.systems = [this.fire];
   }
-  Foo(){}
+  Render(terminal) {
+    for (var i = 0; i < this.map.w; i += 1) {
+      for (var j = 0; j < this.map.h; j += 1) {
+        var v2 = {x:i, y:j};
+        var current = this.map.GetTile(v2);
+        if (current.glyph !== undefined) {
+          terminal.drawGlyph(v2, current.glyph);
+        } else {
+          terminal.drawGlyph(v2, current.dynamicGlyph());
+        }
+      }
+    }
+  }
 }
 
 export default class Game{
-  constructor() {
+  constructor(opts) {
+    this.opts = {...opts}
     this.floors = [
-      new Floor()
     ]
+    for (var i = 0; i < opts.floors; i += 1) {
+      this.floors.push(new Floor({...opts.floor, heat:i}))
+    }
     this.currentFloor = 0;
     this.player = new Player(this.GetCurrentFloor().map.upstairs, this);
-    // this.ppos =
+
   }
   Hover(terminal, pos) {
     this.player.Hover(terminal, pos)
@@ -30,9 +46,16 @@ export default class Game{
     return this.floors[this.currentFloor];
   }
 
+
+
+  glyphFor(tile) {}
+
   Render(terminal) {
     var cf = this.GetCurrentFloor();
-    cf.map.Render(terminal)
+
+    // render the map
+    cf.Render(terminal);
+
     var systems = cf.systems;
     for (var i = 0; i < systems.length; i +=1) {
       var system = systems[i];
@@ -40,23 +63,17 @@ export default class Game{
     }
     this.player.Render(terminal);
   }
-  attemptMove(dx, dy) {
-    var cf = this.GetCurrentFloor();
-    var ppos = this.player.pos;
-    var ttile = {x: ppos.x + dx, y: ppos.y + dy}
-    if (!cf.map.GetTile(ttile).blocksMovement) {
-      this.player.pos = ttile;
-      this.TimeStep();
-    }
-  }
 
-  TimeStep() {
-    var systems = this.GetCurrentFloor().systems;
-    for (var i = 0; i < systems.length; i +=1) {
-      var system = systems[i];
-      system.TimeStep(this.player);
+
+  TimeStep(count = 1) {
+    for (var j = 0; j < count ;j += 1) {
+      var systems = this.GetCurrentFloor().systems;
+      for (var i = 0; i < systems.length; i +=1) {
+        var system = systems[i];
+        system.TimeStep(this.player);
+      }
+      this.player.TimeStep();
     }
-    this.player.TimeStep();
   }
 
 
@@ -79,16 +96,17 @@ export default class Game{
 
   BuildKeyboardContext() {
     return new Input.KeyboardContext()
-      .onDown(Input.KeyCode.DownArrow, () => this.attemptMove(0, 1))
-      .onDown(Input.KeyCode.LeftArrow, () => this.attemptMove(-1, 0))
-      .onDown(Input.KeyCode.RightArrow, () => this.attemptMove(1, 0))
-      .onDown(Input.KeyCode.UpArrow, () => this.attemptMove(0, -1))
-      .onDown(Input.KeyCode.S, () => this.attemptMove(0, 1))
-      .onDown(Input.KeyCode.A, () => this.attemptMove(-1, 0))
-      .onDown(Input.KeyCode.D, () => this.attemptMove(1, 0))
-      .onDown(Input.KeyCode.W, () => this.attemptMove(0, -1))
-      .onDown(Input.KeyCode.Space, () => this.attemptMove(0, 0))
-      .onDown(Input.KeyCode.Period, () => this.attemptMove(0, 0))
+      .onDown(Input.KeyCode.DownArrow,  () => this.player.attemptMove(0, 1))
+      .onDown(Input.KeyCode.LeftArrow,  () => this.player.attemptMove(-1, 0))
+      .onDown(Input.KeyCode.RightArrow, () => this.player.attemptMove(1, 0))
+      .onDown(Input.KeyCode.UpArrow,    () => this.player.attemptMove(0, -1))
+      .onDown(Input.KeyCode.S,          () => this.player.attemptMove(0, 1))
+      .onDown(Input.KeyCode.A,          () => this.player.attemptMove(-1, 0))
+      .onDown(Input.KeyCode.D,          () => this.player.attemptMove(1, 0))
+      .onDown(Input.KeyCode.W,          () => this.player.attemptMove(0, -1))
+      .onDown(Input.KeyCode.Space,      () => this.player.attemptMove(0, 0))
+      .onDown(Input.KeyCode.Period,     () => this.player.attemptMove(0, 0))
+      .onDown(Input.KeyCode.Five,       () => this.TimeStep(50))
   }
   BuildMouseContext(terminal) {
     return new Input.MouseContext()

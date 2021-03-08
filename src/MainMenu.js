@@ -2,12 +2,24 @@ import { CharCode, Color, Terminal, Input } from "malwoden";
 import Game from './Game.js';
 import GameMount from './GameMount.js'
 
+var OPTS_NO_FOV = {
+  floors: 5,
+  floor: {
+  },
+  fov: false
+
+}
+var OPTS_YES_FOV = {
+  ...OPTS_NO_FOV,
+  fov: true,
+}
+
 export default class MainMenu{
   constructor() {
     this.selection = 0;
     this.options = [
-      {label: "Test Bed", cb: this.NewGame},
-      // {label: "new game (3 stories)", exec: () => {}}
+      {label: "5 Stories,  no fov", cb: () => this.NewGame(OPTS_NO_FOV)},
+      {label: "5 Stories, yes fov", cb: () => this.NewGame(OPTS_YES_FOV)}
     ]
   }
 
@@ -28,9 +40,9 @@ export default class MainMenu{
   BuildKeyboardContext() {
     return new Input.KeyboardContext()
       .onDown(Input.KeyCode.DownArrow, () => this.ChangeSelection(1))
-      // .onDown(Input.KeyCode.LeftArrow, () => attemptMove(-1, 0))
-      // .onDown(Input.KeyCode.RightArrow, () => attemptMove(1, 0))
       .onDown(Input.KeyCode.UpArrow, () => this.ChangeSelection(-1))
+      .onDown(Input.KeyCode.S, () => this.ChangeSelection(1))
+      .onDown(Input.KeyCode.W, () => this.ChangeSelection(-1))
       .onDown(Input.KeyCode.Space, () => this.ExecuteSelection());
   }
   BuildMouseContext() {
@@ -44,8 +56,8 @@ export default class MainMenu{
     // console.log("ayy");
     this.options[this.selection].cb();
   }
-  NewGame() {
-    GameMount.SetNewInputHandler(new Game());
+  NewGame(opts) {
+    GameMount.SetNewInputHandler(new Game(opts));
   }
 }
 

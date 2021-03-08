@@ -8,10 +8,18 @@ export default class Util {
     }
     return undefined;
   }
+  static Pick(items) {
+    return Util.WeightedPick(items, (i) => 1);
+  }
+
   static distance(p1, p2) {
     var d1 = Math.abs(p2.x-p1.x)
     var d2 = Math.abs(p2.y-p1.y)
     return Math.sqrt((d1*d1)+(d2*d2))
+  }
+
+  static EqPt(p1, p2) {
+    return p1.x == p2.x && p1.y == p2.y
   }
 
   static lineBetween (startCoordinates, endCoordinates) {

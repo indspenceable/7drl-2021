@@ -3,11 +3,6 @@ import Util from './Util.js'
 
 const INITIAL_SPARK_COUNT = 4;
 const INITIAL_SPARK_HEAT = 20;
-const SMALL_THRESHOLD = 10;
-const LARGE_THRESHOLD = 30;
-
-
-
 
 export default class FireManager {
   constructor(floor) {
@@ -19,13 +14,9 @@ export default class FireManager {
       cartesianRange: true,
     });
     var litTile = null;
-    for (var i = 0; i< INITIAL_SPARK_COUNT; i+=1) {
-        litTile = this.LightRandomTile();
+    for (var i = 0; i < this.floor.opts.heat+3; i+=1) {
+      litTile = this.LightRandomTile();
     }
-    // this.litTiles = this.fov.calculateArray({x:litTile.x, y:litTile.y}, 5);
-
-
-
 
     this.smallGlyph = [
       new Glyph("^", Color.LightCoral),
@@ -43,34 +34,20 @@ export default class FireManager {
       // new Glyph("^", Color.DarkOrange)
     ];
   }
+
   LightRandomTile() {
     var dx = Math.floor(Math.random()*20);
     var dy = Math.floor(Math.random()*20);
     this.GetTile({x:dx, y:dy}).heat = INITIAL_SPARK_HEAT;
     return this.GetTile({x:dx, y:dy})
   }
-  Pick (items) {
-    return items[Math.floor(Math.random() * items.length)];
-  }
 
   GetTile(pos) {
     var mapTile = this.floor.map.GetTile(pos)
-    if (mapTile.fire === undefined) {
-      mapTile.fire = {
-        heat: 0,
-        cd: 2,
-      }
-    } else {
-
-    }
     return mapTile.fire;
   }
 
-
   TimeStep(player) {
-    // return;
-    // if (this.data.length > 10000) return;
-    // console.log(this.data);
     for (var x = 0; x < this.floor.map.w; x += 1) {
       for (var y = 0; y < this.floor.map.h; y +=1 ) {
         var current = this.GetTile({x,y})
@@ -126,15 +103,5 @@ export default class FireManager {
   }
 
   Render(terminal) {
-    for (var x = 0; x < this.floor.map.w; x += 1) {
-      for (var y = 0; y < this.floor.map.h; y +=1 ) {
-        var current = this.GetTile({x,y})
-
-        if (current.heat < 1) {}
-        else if (current.heat < SMALL_THRESHOLD) terminal.drawGlyph({x,y}, this.Pick(this.smallGlyph));
-        else if (current.heat < LARGE_THRESHOLD) terminal.drawGlyph({x,y}, this.Pick(this.medGlyph));
-        else                                     terminal.drawGlyph({x,y}, this.Pick(this.largeGlyph));
-      }
-    }
   }
 }

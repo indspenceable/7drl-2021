@@ -3,46 +3,51 @@ import Util from './Util.js'
 import Tile from './Tile.js'
 
 var FLOOR_OPTS = {
-  glyph: new Glyph('.'),
+  terrain: '.',
   flammability: 100,
   blocksMovement: false,
   blocksFire: false,
+  blocksSight: true
 }
 
 var DOWNSTAIRS_OPTS = {
+  ...FLOOR_OPTS,
+  terrain: '>',
   glyph: new Glyph('>', Color.Red),
   flammability: 0,
-  blocksMovement: false,
-  blocksFire: true,
 }
 
 var UPSTAIRS_OPTS = {
+  ...FLOOR_OPTS,
+  terrain: '<',
   glyph: new Glyph('<', Color.Green),
   flammability: 0,
-  blocksMovement: false,
-  blocksFire: true,
 }
 
 var DOOR_OPTS = {
-  glyph: new Glyph('+'),
-  flammability: 100,
-  blocksMovement: false,
-  blocksFire: false,
+  ...FLOOR_OPTS,
+  terrain: '>',
+  glyph: new Glyph('+', Color.Brown),
 }
 
 
 var WALL_OPTS = {
+  ...FLOOR_OPTS,
+  terrain: '#',
   glyph: new Glyph('#'),
   flammability: 5,
   blocksMovement: true,
   blocksFire: true,
+  blocksSight: true
 }
 
 var OOB_OPTS = {
+  terrain: '?',
   glyph: new Glyph('?'),
   flammability: 0,
   blocksMovement: true,
-  blocksFire: true
+  blocksFire: true,
+  blocksSight: true
 }
 
 export default class LevelMap {
@@ -64,9 +69,9 @@ export default class LevelMap {
       for (var j = 0; j < h; j += 1) {
         var v2 = {x:i, y:j}
         var opts = WALL_OPTS
-        if (v2.x == this.upstairs.x && v2.y == this.upstairs.y) {
+        if (Util.EqPt(v2, this.upstairs))
           opts = UPSTAIRS_OPTS
-        } else if (v2.x == this.downstairs.x && v2.y == this.downstairs.y) {
+        else if (Util.EqPt(v2, this.downstairs)) {
           opts = DOWNSTAIRS_OPTS
         }
         else if (this.builder.IsFloor(v2)) {
@@ -83,6 +88,7 @@ export default class LevelMap {
 
   GetTile(pos) {
     if (typeof pos !== 'object') {
+      console.log("Trying to getTile on a nonobject'");
       (null)();
     }
     if (!this.InBounds(pos)) {
@@ -95,7 +101,7 @@ export default class LevelMap {
     return pos.x >= 0 && pos.y >= 0 && pos.x < this.w && pos.y < this.h;
   }
   Blocked(pos) {
-    return !this.InBounds(pos) || this.tiles[pos.x][pos.y].blocksMovement;
+    return !this.InBounds(pos) || this.GetTile(pos).blocksMovement;
   }
 
   Render(terminal) {
@@ -225,9 +231,11 @@ class LevelMapBuilder {
   }
 
   RandomFloor() {
-    var x = Math.floor(Math.random() * this.w)
-    var y = Math.floor(Math.random() * this.h)
-    return {x, y}
+    var room = this.rooms[Math.floor(Math.random() * this.rooms.length)];
+    var x = Math.floor(Math.random() * room.w)
+    var y = Math.floor(Math.random() * room.h)
+
+    return {x:room.x+x, y:room.y+y}
   }
 
   IsFloor(pos) {
