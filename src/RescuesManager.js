@@ -1,32 +1,36 @@
 import { Glyph } from "malwoden";
 import Util from './Util.js'
 
+class Civilian {}
+
 export default class RescuesManager {
   constructor(floor) {
     this.priority = 125;
     this.floor = floor;
     this.civs = []
     while(this.civs.length < this.floor.opts.rescues){
-      var newCiv = this.floor.map.builder.RandomFloor()
-      if (!this.civs.some(c => Util.EqPt(newCiv, c))) {
-        this.civs.push(newCiv)
-      }
+      this.SpawnRescue();
+    }
+  }
+  SpawnRescue() {
+    var newCiv = this.floor.map.builder.RandomFloor()
+    var civTile = this.floor.map.GetTile(newCiv)
+    if (civTile.Feature == null) {
+      this.civs.push(newCiv)
+      var that = this;
+      civTile.Feature = {
+        g: "@",
+        blocksMovement: false,
+        bump: (player) => {
+          player.log.Display("You rescued a civilian.")
+          player.rescues +=1
+          that.civs = that.civs.filter(civ => !Util.EqPt(civ, newCiv))
+        }
+      };
     }
   }
   Render(terminal) {
-    for (var i = 0; i < this.civs.length; i +=1) {
-      terminal.drawGlyph(this.civs[i], new Glyph("@"))
-    }
   }
   TimeStep(player) {
-    // console.log("YO");
-    // for (int i = 0: i < this.civs.length; i +=1){
-      var civ = this.civs.find(c=> Util.EqPt(c, player.pos))
-      // console.log("Yeel");
-      if (civ !== undefined) {
-        this.civs.splice(this.civs.indexOf(civ), 1)
-        player.rescues += 1;
-      }
-    // }
   }
 }

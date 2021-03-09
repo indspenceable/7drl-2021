@@ -57,9 +57,14 @@ var OOB_OPTS = {
   blocksSight: true
 }
 
+class Upstairs{}
+class Downstairs{}
+class Door{}
+class Wall{}
+
 export default class LevelMap {
   constructor(floor){
-    window.floor = floor
+
     this.floor = floor
     this.w = floor.opts.w;
     this.h = floor.opts.h;
@@ -76,19 +81,40 @@ export default class LevelMap {
       this.tiles[i] = {}
       for (var j = 0; j < this.h; j += 1) {
         var v2 = {x:i, y:j}
-        var opts = WALL_OPTS
-        if (Util.EqPt(v2, this.upstairs))
-          opts = UPSTAIRS_OPTS
-        else if (Util.EqPt(v2, this.downstairs)) {
-          opts = DOWNSTAIRS_OPTS
-        }
-        else if (this.builder.IsFloor(v2)) {
-          opts = FLOOR_OPTS
-        } else if (this.builder.IsDoor(v2)) {
-          opts = DOOR_OPTS
-        }
 
-        this.tiles[i][j] = new Tile(opts)
+        var nt = new Tile(FLOOR_OPTS)
+        if (Util.EqPt(v2, this.upstairs))
+          nt.Feature = {
+            g: '<',
+            c: Color.Green
+          }
+        else if (Util.EqPt(v2, this.downstairs))
+          nt.Feature = {
+            g: '>',
+            c: Color.Red,
+            blocksMovement: true,
+            bump: (player) => {
+              player.log.Display("You descend the stairs...")
+              player.game.currentFloor += 1;
+              player.pos = player.game.GetCurrentFloor().map.upstairs
+              return true;
+            }
+          }
+        else if (this.builder.IsDoor(v2))
+          nt.Feature = {
+            g: '+',
+            c: Color.Brown,
+            blocksSight: true,
+            flammabilityDelta: -10,
+          }
+        else if (!this.builder.IsFloor(v2))
+          nt.Feature = {
+            g: '#',
+            blocksSight: true,
+            blocksMovement: true,
+            flammabilityDelta: -50,
+          }
+        this.tiles[i][j] = nt
       }
     }
     this.oob = new Tile(OOB_OPTS)
@@ -109,8 +135,9 @@ export default class LevelMap {
     return pos.x >= 0 && pos.y >= 0 && pos.x < this.w && pos.y < this.h;
   }
   Blocked(pos) {
-    return !this.InBounds(pos) || this.GetTile(pos).opts.blocksMovement;
+    return !this.InBounds(pos) || this.GetTile(pos).blocksMovement();
   }
+
 }
 
 

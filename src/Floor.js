@@ -2,7 +2,7 @@ import Util from './Util.js'
 import FireManager from './FireManager.js'
 import LevelMap from './LevelMap.js'
 import RescuesManager from './RescuesManager.js'
-import ExplosivesManager from './ExplosivesManager.js'
+import FeaturesManager from './FeaturesManager.js'
 
 export default class Floor {
   constructor(opts) {
@@ -10,7 +10,7 @@ export default class Floor {
     this.map = new LevelMap(this);
     this.fire = new FireManager(this);
     this.rescues = new RescuesManager(this);
-    this.explosives = new ExplosivesManager(this);
+    this.explosives = new FeaturesManager(this);
     this.systems = [this.fire, this.rescues, this.explosives];
   }
   Render(terminal, player) {

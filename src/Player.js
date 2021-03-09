@@ -1,13 +1,11 @@
 import { Glyph, Color, Input, FOV } from "malwoden";
 import Util from './Util.js'
+import MessageLog from './MessageLog.js'
 var PlayerGlyph = new Glyph("@", Color.Yellow)
 
 
 
 export default class Player {
-
-
-
   constructor(pos, game) {
     this.priority = 100;
     this.pos = pos
@@ -16,10 +14,11 @@ export default class Player {
       target: pos
     }
     this.game = game
+    this.log = new MessageLog();
 
     this.losCheck = new FOV.PreciseShadowcasting({
       lightPasses: (pos) => {
-        return !this.game.GetCurrentFloor().map.GetTile(pos).opts.blocksSight
+        return !this.game.GetCurrentFloor().map.GetTile(pos).blocksSight()
       },
       topology: "eight",
       cartesianRange: true,
@@ -74,15 +73,15 @@ export default class Player {
 
   attemptMove(dx, dy) {
     var cf = this.game.GetCurrentFloor();
-    var ttile = {x: this.pos.x + dx, y: this.pos.y + dy}
-    if (!cf.map.GetTile(ttile).opts.blocksMovement) {
-      if (Util.EqPt(ttile, cf.map.downstairs)){
-        this.game.currentFloor += 1;
-        // console.log(this.game.GetCurrentFloor().map.upstairs)
-        this.pos = this.game.GetCurrentFloor().map.upstairs
-      } else {
-        this.pos = ttile;
-      }
+    var dest = {x: this.pos.x + dx, y: this.pos.y + dy}
+    var destTile = cf.map.GetTile(dest)
+
+    if (destTile.Feature != null) {
+      if (destTile.bump(this)) return;
+    }
+
+    if (!destTile.blocksMovement()) {
+      this.pos = dest;
       this.game.TimeStep();
     }
   }
@@ -163,8 +162,18 @@ export default class Player {
     } else {
       var hoverTarget = cf.map.GetTile(this.hover.target);
       terminal.writeAt({x:27, y:10}, "terrain: " + hoverTarget.opts.desc)
-      terminal.writeAt({x:27, y:11}, "heat:" + hoverTarget.fire.heat)
-      terminal.writeAt({x:27, y:12}, "damp:" + hoverTarget.fire.damp)
+      if (hoverTarget.Feature != null)
+        terminal.writeAt({x:27, y:11}, "feature: " + hoverTarget.Feature.g)
+      // terminal.writeAt({x:27, y:11}, "desc: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:27, y:12}, "heat:" + hoverTarget.fire.heat)
+      terminal.writeAt({x:27, y:13}, "damp:" + hoverTarget.fire.damp)
+    }
+
+
+    terminal.writeAt({x:27, y:19}, "-----------------");
+    for (var i = 0; i < 10; i += 1) {
+      var msg = this.log.GetMessage(i);
+      terminal.writeAt({x:27, y:15+i},msg);
     }
   }
 }

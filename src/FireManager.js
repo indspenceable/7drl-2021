@@ -98,7 +98,10 @@ export default class FireManager {
     }
 
     var playerHit = this.GetTile(player.pos)
-    player.currentHP -= playerHit.heat
+    if (playerHit.heat > 1) {
+      player.log.Display("You burn for " + playerHit.heat + " hp.")
+      player.currentHP -= playerHit.heat
+    }
   }
   FindTile() {
 

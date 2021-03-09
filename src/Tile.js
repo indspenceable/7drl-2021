@@ -14,14 +14,39 @@ export default class Tile {
       cd: 1,
       damp: 0,
     }
+    this.Feature = null;
+  }
+
+  flammabilityBase() {
+    this.opts.flammability + this.query('flammabilityDelta')
   }
 
   flammabilityMultiplier() {
-    return this.opts.flammability/100;
+    return this.flammabilityBase()/100;
   }
   flammabilitySquared() {
-    return this.opts.flammability * this.opts.flammability
+    var base = this.flammabilityBase();
+    return base * base;
   }
+
+  query(str, def) {
+    if (this.Feature != null)
+      return this.Feature[str]
+    return def;
+  }
+
+  blocksMovement() {
+    return this.query('blocksMovement', false)
+  }
+  blocksSight() {
+    return this.query('blocksSight', false)
+  }
+  bump(player) {
+    if (this.Feature != null && this.Feature.bump != undefined) {
+      return this.Feature.bump(player)
+    }
+  }
+
 
   FireColor(options, heat, bonus) {
     var choice = Util.Pick(options);
@@ -35,6 +60,13 @@ export default class Tile {
     var c = Color.White;
     var bg = Color.Black;
     var g = this.opts.terrain;
+
+    if (this.Feature != null) {
+      g = this.Feature.g || g;
+      c = this.Feature.c || c;
+      bg = this.Feature.bg || bg;
+    }
+
     if (this.fire.heat > 0){
       c = this.FireColor(DIM, this.fire.heat, 0.25)
       if (this.fire.heat > 15)
