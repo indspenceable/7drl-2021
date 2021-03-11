@@ -6,7 +6,7 @@ const CONFIG = {
   heat: 7,
 }
 
-const CivilianFeature ={
+const CivilianFeature = {
   g: "@",
   blocksMovement: false,
   bump: (player, tile) => {
@@ -24,7 +24,7 @@ const ExplosiveBarrelFeature= {
   tick: (tile, player) => {
     var floor = player.game.GetCurrentFloor();
     var roll = (Math.random() * 30) + 3;
-    console.log(tile);
+    // console.log(tile);
     if (tile.fire.heat > roll) {
       player.log.Display("A barrel explodes!")
       for (var dx = -CONFIG.radius; dx <= CONFIG.radius; dx+=1){

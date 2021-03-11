@@ -27,11 +27,25 @@ var FAST_SCALING = {
   scaling: 2,
 }
 
+var EZ = {
+  floors: 2,
+  floor: {
+    w: 20,
+    h: 30,
+    iterations:2,
+    resuces:2,
+    barrels:2,
+  },
+  fov: false,
+  scaling: 2
+}
+
 
 export default class MainMenu{
   constructor() {
     this.selection = 0;
     this.options = [
+      {label: "ez",                 cb: () => this.NewGame(EZ)},
       {label: "5 Stories,  no fov", cb: () => this.NewGame(OPTS_NO_FOV)},
       {label: "5 Stories, yes fov", cb: () => this.NewGame(OPTS_YES_FOV)},
       {label: "Faster scaling    ", cb: () => this.NewGame(FAST_SCALING)}

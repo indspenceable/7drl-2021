@@ -1,4 +1,5 @@
 import { Glyph, Color, Terminal, Input } from "malwoden";
+import MainMenu from './MainMenu.js'
 import Util from './Util.js'
 import Tile from './Tile.js'
 
@@ -25,18 +26,50 @@ var OOB_OPTS = {
 
 const UPSTAIRS_FEATURE = {
   g: '<',
-  c: Color.Green
+  c: Color.Yellow,
+  blocksMovement: false,
+  bump: (player, tile) => {
+    if (player.hasAmulet) {
+      player.log.Display("You have the amulet! Now, get out of here!")
+      return false;
+    } else {
+      player.log.Display("You ascend the stairs...")
+      player.game.currentFloor += 1;
+      player.pos = player.game.GetCurrentFloor().map.downstairs
+      return true;
+    }
+  }
 }
 
 const DOWNSTAIRS_FEATURE = {
   g: '>',
   c: Color.Red,
-  blocksMovement: true,
+  blocksMovement: false,
   bump: (player, tile) => {
-    player.log.Display("You descend the stairs...")
-    player.game.currentFloor += 1;
-    player.pos = player.game.GetCurrentFloor().map.upstairs
-    return true;
+    if (player.hasAmulet) {
+      player.log.Display("You descend the stairs...")
+      player.game.currentFloor -= 1;
+      player.pos = player.game.GetCurrentFloor().map.upstairs
+      return true;
+    } else {
+      player.log.Display("You can't return without the amulet!")
+      return true;
+    }
+  }
+}
+
+const ENTRANCE_FEATURE = {
+  g: '>',
+  c: Color.Black,
+  bg: Color.Red,
+  blocksMovement: false,
+  bump: (player, tile) => {
+    if (player.hasAmulet) {
+      GameMount.SetNewInputHandler(new MainMenu());
+    } else {
+      player.log.Display("You can't return without the amulet!")
+      return true;
+    }
   }
 }
 
@@ -65,6 +98,18 @@ const WALL_FEATURE = {
   }
 }
 
+const AMULET_FEATURE = {
+  g: "*",
+  c: Color.Yellow,
+  blocksMovement: true,
+  bump: (player, tile) => {
+    player.hasAmulet = true;
+    player.log.Display("You have the amulet of Rodgort! Now to get out...")
+    tile.Feature = null;
+  }
+}
+
+
 export default class LevelMap {
   constructor(floor){
 
@@ -87,9 +132,17 @@ export default class LevelMap {
 
         var nt = new Tile(FLOOR_OPTS, v2)
         if (Util.EqPt(v2, this.upstairs))
-          nt.Feature = { ...UPSTAIRS_FEATURE }
+          if (floor.opts.finalFloor){
+            nt.Feature = { ...AMULET_FEATURE }
+          } else {
+            nt.Feature = { ...UPSTAIRS_FEATURE }
+          }
         else if (Util.EqPt(v2, this.downstairs))
-          nt.Feature = { ...DOWNSTAIRS_FEATURE }
+          if (floor.opts.heat == 0) {
+            nt.Feature = {...ENTRANCE_FEATURE}
+          } else {
+            nt.Feature = { ...DOWNSTAIRS_FEATURE }
+          }
         else if (this.builder.IsDoor(v2))
           nt.Feature = { ...DOOR_FEATURE }
         else if (!this.builder.IsFloor(v2))

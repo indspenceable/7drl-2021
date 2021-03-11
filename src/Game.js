@@ -8,10 +8,10 @@ export default class Game{
     this.opts = {...opts}
     this.floors = []
     for (var i = 0; i < opts.floors; i += 1) {
-      this.floors.push(new Floor({...opts.floor, heat:i}))
+      this.floors.push(new Floor({...opts.floor, heat:i, finalFloor: (opts.floors-1 == i)}))
     }
     this.currentFloor = 0;
-    this.player = new Player(this.GetCurrentFloor().map.upstairs, this);
+    this.player = new Player(this.GetCurrentFloor().map.downstairs, this);
 
   }
   Hover(terminal, pos) {

@@ -16,6 +16,7 @@ export default class Player {
     }
     this.game = game
     this.log = new MessageLog();
+    this.hasAmulet = false;
 
     this.losCheck = new FOV.PreciseShadowcasting({
       lightPasses: (pos) => {
@@ -148,35 +149,41 @@ export default class Player {
     }
     terminal.drawGlyph(this.pos, PlayerGlyph);
 
-    terminal.writeAt({x:26, y:0}, "vitals:");
-    terminal.writeAt({x:27, y:1}, "hp:");
-    terminal.writeAt({x:33, y:1}, "" + this.currentHP + "/100", Color.Green);
+    var xp = 26-6
+    var xp2 = 27-6
+    var xp3 = 33-6
 
-    terminal.writeAt({x:27, y:2}, "h2o:");
-    terminal.writeAt({x:33, y:2}, " " + this.remainingWater + "/ 20", Color.Green);
-    terminal.writeAt({x:27, y:3}, "nozzle: ")
-    terminal.writeAt({x:35, y:3}, this.equippedWeapon().desc);
-    terminal.writeAt({x:27, y:5}, "civs: " + this.rescues);
+    terminal.writeAt({x:xp, y:0}, "vitals:");
+    terminal.writeAt({x:xp2, y:1}, "hp:");
+    terminal.writeAt({x:xp3, y:1}, "" + this.currentHP + "/100", Color.Green);
 
-    terminal.writeAt({x:27, y:8}, "-----------------");
-    terminal.writeAt({x:26, y:9}, "target:")
+    terminal.writeAt({x:xp2, y:2}, "h2o:");
+    terminal.writeAt({x:xp3, y:2}, " " + this.remainingWater + "/ 20", Color.Green);
+    terminal.writeAt({x:xp2, y:3}, "nozzle: ")
+    terminal.writeAt({x:xp3+2, y:3}, this.equippedWeapon().desc);
+    terminal.writeAt({x:xp2, y:5}, "civs: " + this.rescues);
+    if (this.hasAmulet)
+      terminal.writeAt({x:xp2, y:6}, "carrying amulet of Rodgort");
+
+    terminal.writeAt({x:xp2, y:8}, "-----------------");
+    terminal.writeAt({x:xp, y:9}, "target:")
     if (this.game.opts.fov && !this.hover.inSight) {
-      terminal.writeAt({x:27, y:10}, "can't see!")
+      terminal.writeAt({x:xp2, y:10}, "can't see!")
     } else {
       var hoverTarget = cf.map.GetTile(this.hover.target);
-      terminal.writeAt({x:27, y:10}, "terrain: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:xp2, y:10}, "terrain: " + hoverTarget.opts.desc)
       if (hoverTarget.Feature != null)
-        terminal.writeAt({x:27, y:11}, "feature: " + hoverTarget.Feature.g)
-      // terminal.writeAt({x:27, y:11}, "desc: " + hoverTarget.opts.desc)
-      terminal.writeAt({x:27, y:12}, "heat:" + Math.floor(hoverTarget.fire.heat))
-      terminal.writeAt({x:27, y:13}, "damp:" + Math.floor(hoverTarget.fire.damp))
+        terminal.writeAt({x:xp2, y:11}, "feature: " + hoverTarget.Feature.g)
+      // terminal.writeAt({x:xp2, y:11}, "desc: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:xp2, y:12}, "heat:" + Math.floor(hoverTarget.fire.heat))
+      terminal.writeAt({x:xp2, y:13}, "damp:" + Math.floor(hoverTarget.fire.damp))
     }
 
 
-    terminal.writeAt({x:27, y:19}, "-----------------");
+    terminal.writeAt({x:xp2, y:19}, "-----------------");
     for (var i = 0; i < 10; i += 1) {
       var msg = this.log.GetMessage(i);
-      terminal.writeAt({x:27, y:20+i},msg);
+      terminal.writeAt({x:xp2, y:20+i},msg);
     }
   }
 }
