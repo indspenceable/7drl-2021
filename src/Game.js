@@ -1,5 +1,5 @@
 import { Glyph, Input, FOV } from "malwoden";
-
+import MessageWindow from './MessageWindow.js'
 import Player from './Player.js'
 import Floor from './Floor.js'
 
@@ -12,7 +12,6 @@ export default class Game{
     }
     this.currentFloor = 0;
     this.player = new Player(this.GetCurrentFloor().map.downstairs, this);
-
   }
   Hover(terminal, pos) {
     this.player.Hover(terminal, pos)
@@ -21,8 +20,6 @@ export default class Game{
   GetCurrentFloor() {
     return this.floors[this.currentFloor];
   }
-
-
 
   glyphFor(tile) {}
 
@@ -40,6 +37,7 @@ export default class Game{
     });
     return systems;
   }
+
 
   Render(terminal) {
     this.player.calculateVisibleTiles()
@@ -67,23 +65,6 @@ export default class Game{
     }
   }
 
-
-  ShootOil(terminal, pos) {
-    // var tPos = terminal.pixelToChar(pos);
-
-    // var radius = 0;
-    // for (var i = -radius; i < 1+radius; i += 1) {
-    //   for (var j = -radius; j < 1+radius; j += 1) {
-    //     var cf = this.floors[this.currentFloor]
-    //     if (cf.map.InBounds(tPos)) {
-    //       var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
-    //       tile.glyph = new Glyph("_");
-    //       // tile.flammability = 200;
-    //     }
-    //   }
-    // }
-    // cf.fire.TimeStep();
-  }
 
   BuildKeyboardContext() {
     return new Input.KeyboardContext()

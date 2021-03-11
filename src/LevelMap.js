@@ -2,6 +2,8 @@ import { Glyph, Color, Terminal, Input } from "malwoden";
 import MainMenu from './MainMenu.js'
 import Util from './Util.js'
 import Tile from './Tile.js'
+import MessageWindow from './MessageWindow.js'
+import GameMount from './GameMount.js'
 
 var FLOOR_OPTS = {
   terrain: '.',
@@ -65,7 +67,15 @@ const ENTRANCE_FEATURE = {
   blocksMovement: false,
   bump: (player, tile) => {
     if (player.hasAmulet) {
-      GameMount.SetNewInputHandler(new MainMenu());
+      GameMount.SetNewInputHandler(new MessageWindow(player.game,
+        ["You have successfully made your ",
+         "way through the burning building,",
+         "to claim the amulet of rodgort.",
+         "",
+         "At long last, you are victorious!",
+         "Congratulations!"
+         ],
+         {w: 35, h:10, cb: () => GameMount.SetNewInputHandler(new MainMenu())}));
     } else {
       player.log.Display("You can't return without the amulet!")
       return true;
