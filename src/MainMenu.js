@@ -9,6 +9,7 @@ var OPTS_NO_FOV = {
     h: 30,
     iterations: 8,
     rescues:3,
+    barrels:6
   },
   fov: false,
   scaling: 2,

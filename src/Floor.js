@@ -1,7 +1,6 @@
 import Util from './Util.js'
 import FireManager from './FireManager.js'
 import LevelMap from './LevelMap.js'
-import RescuesManager from './RescuesManager.js'
 import FeaturesManager from './FeaturesManager.js'
 
 export default class Floor {
@@ -9,9 +8,8 @@ export default class Floor {
     this.opts = {...opts}
     this.map = new LevelMap(this);
     this.fire = new FireManager(this);
-    this.rescues = new RescuesManager(this);
-    this.explosives = new FeaturesManager(this);
-    this.systems = [this.fire, this.rescues, this.explosives];
+    this.features = new FeaturesManager(this);
+    this.systems = [this.fire, this.features];
   }
   Render(terminal, player) {
     for (var i = 0; i < this.map.w; i += 1) {
@@ -24,8 +22,6 @@ export default class Floor {
           } else {
             terminal.drawGlyph(v2, current.dynamicGlyph());
           }
-        } else {
-          // terminal.drawGlyph(v2, new Glyph("V"));
         }
       }
     }

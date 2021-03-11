@@ -5,62 +5,65 @@ import Tile from './Tile.js'
 var FLOOR_OPTS = {
   terrain: '.',
   desc: 'open floor',
-  flammability: 110,
+  flammability: 100,
+  burnSpeed: 105,
   blocksMovement: false,
   blocksFire: false,
   blocksSight: false
-}
-
-var DOWNSTAIRS_OPTS = {
-  ...FLOOR_OPTS,
-  terrain: '>',
-  desc: 'stairs onward',
-  glyph: new Glyph('>', Color.Red),
-  flammability: 0,
-}
-
-var UPSTAIRS_OPTS = {
-  ...FLOOR_OPTS,
-  terrain: '<',
-  desc: 'stairs back',
-  glyph: new Glyph('<', Color.Green),
-  flammability: 0,
-}
-
-var DOOR_OPTS = {
-  ...FLOOR_OPTS,
-  terrain: '>',
-  desc: 'a door',
-  glyph: new Glyph('+', Color.Brown),
-  blocksSight: true
-}
-
-
-var WALL_OPTS = {
-  ...FLOOR_OPTS,
-  terrain: '#',
-  desc: 'stone wall',
-  glyph: new Glyph('#'),
-  flammability: 15,
-  blocksMovement: true,
-  blocksFire: true,
-  blocksSight: true
 }
 
 var OOB_OPTS = {
   terrain: '?',
   desc: '???',
   glyph: new Glyph('?'),
+  burnSpeed: 0,
   flammability: 0,
   blocksMovement: true,
   blocksFire: true,
   blocksSight: true
 }
 
-class Upstairs{}
-class Downstairs{}
-class Door{}
-class Wall{}
+const UPSTAIRS_FEATURE = {
+  g: '<',
+  c: Color.Green
+}
+
+const DOWNSTAIRS_FEATURE = {
+  g: '>',
+  c: Color.Red,
+  blocksMovement: true,
+  bump: (player, tile) => {
+    player.log.Display("You descend the stairs...")
+    player.game.currentFloor += 1;
+    player.pos = player.game.GetCurrentFloor().map.upstairs
+    return true;
+  }
+}
+
+const DOOR_FEATURE = {
+  g: '+',
+  c: Color.Brown,
+  blocksSight: true,
+  flammabilityDelta: -10,
+}
+const WALL_FEATURE = {
+  g: '#',
+  blocksSight: true,
+  blocksMovement: true,
+  flammabilityDelta: -50,
+  blocksFire: true,
+  bump: (player, tile) => {
+    if (tile.damage === undefined)
+      tile.damage = 0;
+    player.log.Display("You chop at the wall.")
+    tile.damage += 1;
+    if (tile.damage >= 3) {
+      tile.Feature = null;
+      player.log.Display("The wall crumbles!")
+    }
+    return true;
+  }
+}
 
 export default class LevelMap {
   constructor(floor){
@@ -82,42 +85,19 @@ export default class LevelMap {
       for (var j = 0; j < this.h; j += 1) {
         var v2 = {x:i, y:j}
 
-        var nt = new Tile(FLOOR_OPTS)
+        var nt = new Tile(FLOOR_OPTS, v2)
         if (Util.EqPt(v2, this.upstairs))
-          nt.Feature = {
-            g: '<',
-            c: Color.Green
-          }
+          nt.Feature = { ...UPSTAIRS_FEATURE }
         else if (Util.EqPt(v2, this.downstairs))
-          nt.Feature = {
-            g: '>',
-            c: Color.Red,
-            blocksMovement: true,
-            bump: (player) => {
-              player.log.Display("You descend the stairs...")
-              player.game.currentFloor += 1;
-              player.pos = player.game.GetCurrentFloor().map.upstairs
-              return true;
-            }
-          }
+          nt.Feature = { ...DOWNSTAIRS_FEATURE }
         else if (this.builder.IsDoor(v2))
-          nt.Feature = {
-            g: '+',
-            c: Color.Brown,
-            blocksSight: true,
-            flammabilityDelta: -10,
-          }
+          nt.Feature = { ...DOOR_FEATURE }
         else if (!this.builder.IsFloor(v2))
-          nt.Feature = {
-            g: '#',
-            blocksSight: true,
-            blocksMovement: true,
-            flammabilityDelta: -50,
-          }
+          nt.Feature = { ...WALL_FEATURE }
         this.tiles[i][j] = nt
       }
     }
-    this.oob = new Tile(OOB_OPTS)
+    this.oob = new Tile(OOB_OPTS, null)
   }
 
   GetTile(pos) {

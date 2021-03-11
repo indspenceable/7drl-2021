@@ -1,5 +1,6 @@
 import { Glyph, Color, Input, FOV } from "malwoden";
 import Util from './Util.js'
+import MainMenu from './MainMenu.js'
 import MessageLog from './MessageLog.js'
 var PlayerGlyph = new Glyph("@", Color.Yellow)
 
@@ -30,7 +31,7 @@ export default class Player {
     this.weapons = [
       {
         desc:"focused",
-        power: 10,
+        power: 12,
         radius: 0,
         range: 20,
       },
@@ -87,7 +88,7 @@ export default class Player {
   }
 
   ShootWater(tPos, radius, power) {
-    // console("Gifre!");
+    this.log.Display("You fire the water cannon.")
     var cf = this.game.GetCurrentFloor()
     for (var i = -radius; i <= radius; i += 1) {
       for (var j = -radius; j <= radius; j += 1) {
@@ -106,7 +107,9 @@ export default class Player {
 
 
   TimeStep() {
-
+    if (this.currentHP <= 0) {
+      GameMount.SetNewInputHandler(new MainMenu());
+    }
   }
 
   changeWeapon(delta) {
@@ -165,15 +168,15 @@ export default class Player {
       if (hoverTarget.Feature != null)
         terminal.writeAt({x:27, y:11}, "feature: " + hoverTarget.Feature.g)
       // terminal.writeAt({x:27, y:11}, "desc: " + hoverTarget.opts.desc)
-      terminal.writeAt({x:27, y:12}, "heat:" + hoverTarget.fire.heat)
-      terminal.writeAt({x:27, y:13}, "damp:" + hoverTarget.fire.damp)
+      terminal.writeAt({x:27, y:12}, "heat:" + Math.floor(hoverTarget.fire.heat))
+      terminal.writeAt({x:27, y:13}, "damp:" + Math.floor(hoverTarget.fire.damp))
     }
 
 
     terminal.writeAt({x:27, y:19}, "-----------------");
     for (var i = 0; i < 10; i += 1) {
       var msg = this.log.GetMessage(i);
-      terminal.writeAt({x:27, y:15+i},msg);
+      terminal.writeAt({x:27, y:20+i},msg);
     }
   }
 }

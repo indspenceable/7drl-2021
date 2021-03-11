@@ -10,7 +10,7 @@ export default class FireManager {
     this.floor = floor;
 
     this.fov = new FOV.PreciseShadowcasting({
-      lightPasses: (pos) => !this.floor.map.GetTile(pos).opts.blocksFire,
+      lightPasses: (pos) => !this.floor.map.GetTile(pos).blocksFire(),
       topology: "four",
       cartesianRange: true,
     });
@@ -49,50 +49,64 @@ export default class FireManager {
   }
 
   TimeStep(player) {
+    // console.log("TIme stepping for fire..")
     for (var x = 0; x < this.floor.map.w; x += 1) {
       for (var y = 0; y < this.floor.map.h; y +=1 ) {
         var current = this.GetTile({x,y})
+        var mapTile = this.floor.map.GetTile({x,y})
         if (current.heat > 80) current.heat = 80;
         // if (current.heat < 2) continue;
 
         if (current.cd > 0) {
           current.cd -= 1;
         } else {
+
           var distance = Math.floor(current.heat / 30)+1;
           var hits = this.fov.calculateArray({x, y}, distance).filter(
-            hit => !this.floor.map.GetTile(hit.pos).opts.blocksFire &&
-              hit.r <= distance &&
-              ((hit.pos.x != x) || (hit.pos.y != y))
+            hit => (hit.r <= distance)
           );
-          var hit = Util.WeightedPick(hits,(h) => this.floor.map.GetTile(h.pos).flammabilitySquared())
+
+          var hit = Util.WeightedPick(hits,(h) => {
+            return this.floor.map.GetTile(h.pos).flammabilitySquared()
+          })
 
           if (hit !== undefined) {
             var hitTile = this.floor.map.GetTile(hit.pos);
             var roll = Math.floor(Math.random() * 100);
-            if (distance > 0 && roll < (hitTile.flammabilityMultiplier() * current.heat/3)) {
+            if (distance > 0 && roll < (hitTile.flammabilityMultiplier() * current.heat/2)) {
               var hitFireData = this.GetTile(hit.pos)
 
-              var newHeatValue = Math.floor(hitTile.flammabilityMultiplier() * (hitFireData.heat + Math.floor(current.heat/3)) - 3);
+              // var newHeatValue = Math.floor(hitTile.flammabilityMultiplier() * (hitFireData.heat + Math.floor(current.heat/3)) - 3);
+              var newHeatValue = Math.floor(Math.random()*5);
+
               newHeatValue = Math.max(newHeatValue,0)
               if (newHeatValue < hitFireData.damp) {
-                // console.log("unDAMPINGggg");
                 hitFireData.damp = newHeatValue;
               } else {
                 newHeatValue -= hitFireData.damp
 
                 hitFireData.damp = 0
                 if (hitFireData.heat <= 0) {
-                  hitFireData.cd = Math.floor(Math.random()*3);
+                  hitFireData.cd = Math.random(3)+2
                 }
-                hitFireData.heat = newHeatValue;
+                // console.log("HI?")
+                hitFireData.heat += newHeatValue;
               }
-
-              current.heat = Math.floor(current.heat*this.floor.map.GetTile({x, y}).flammabilityMultiplier())
-              current.cd = Math.floor(Math.random()*3);
             } else {
-              var target = hitTile.flammabilityMultiplier() * current.heat/2
+              var hitFireData = this.GetTile(hit.pos)
+              hitFireData.minorHeat = 10;
             }
           }
+
+          var bs = mapTile.burnSpeed()
+          // console.log(bs)
+          // window.mapTile = mapTile;
+          // if (isNan(bs)) null();
+          // current.heat = current.heat*bs
+          current.cd = Math.random(3)+2
+
+
+          // current.heat = current.heat*this.floor.map.GetTile({x, y}).flammabilityMultiplier();
         }
       }
     }
@@ -100,7 +114,7 @@ export default class FireManager {
     var playerHit = this.GetTile(player.pos)
     if (playerHit.heat > 1) {
       player.log.Display("You burn for " + playerHit.heat + " hp.")
-      player.currentHP -= playerHit.heat
+      player.currentHP -= Math.floor(playerHit.heat)
     }
   }
   FindTile() {
