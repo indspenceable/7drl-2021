@@ -79,7 +79,7 @@ export default class Game{
 
       .onDown(Input.KeyCode.Space,      () => this.TimeStep( 1))
       .onDown(Input.KeyCode.Period,     () => this.TimeStep( 1))
-      .onDown(Input.KeyCode.Five,       () => this.TimeStep(50))
+      .onDown(Input.KeyCode.Five,       () => this.TimeStep(10))
 
       .onDown(Input.KeyCode.Q,          () => this.player.changeWeapon( 1))
       .onDown(Input.KeyCode.E,          () => this.player.changeWeapon(-1))

@@ -42,13 +42,13 @@ export default class Tile {
   }
 
   blocksMovement() {
-    return this.query('blocksMovement', false) || this.opts.BLocksMovement
+    return this.query('blocksMovement', false) || this.opts.BlocksMovement
   }
   blocksSight() {
     return this.query('blocksSight', false)
   }
   blocksFire() {
-    return this.query('blocksFire', false)
+    return this.query('blocksFire', false) || this.Feature != null
   }
   bump(player) {
     if (this.Feature != null && this.Feature.bump != undefined) {
@@ -61,7 +61,7 @@ export default class Tile {
     var choice = Util.Pick(options);
     // console.log(choice);
     var [h,s,v] = ColorUtil.rgbToHsv(choice.r, choice.g, choice.b)
-    v = v * ((2*heat/100) + bonus)
+    v = (heat/4)
     return new Color(...ColorUtil.hsvToRgb(h,s,v))
   }
 
