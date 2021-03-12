@@ -45,7 +45,7 @@ export default class MainMenu{
     this.selection = 0;
     this.options = [
       {label: "Normal", cb: () => this.NewGame(EZ)},
-      {label: "Hard",   cb: () => this.NewGame(HardMode)}
+      {label: "Hard",   cb: () => this.NewGame(HARD)}
     ]
   }
 
