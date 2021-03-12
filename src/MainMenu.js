@@ -2,31 +2,6 @@ import { CharCode, Color, Terminal, Input } from "malwoden";
 import Game from './Game.js';
 import GameMount from './GameMount.js'
 
-var OPTS_NO_FOV = {
-  floors: 5,
-  floor: {
-    w: 25,
-    h: 30,
-    iterations: 8,
-    rescues:3,
-    barrels:6
-  },
-  fov: false,
-  scaling: 2,
-
-}
-var OPTS_YES_FOV = {
-  ...OPTS_NO_FOV,
-  fov: true,
-}
-
-var FAST_SCALING = {
-  ...OPTS_YES_FOV,
-  fov: true,
-  floors: 5,
-  scaling: 2,
-}
-
 var EZ = {
   floors: 3,
   floor: {
@@ -43,24 +18,47 @@ var EZ = {
 }
 
 
+var EZ = {
+  floors: 5,
+  floor: {
+    w: 20,
+    h: 30,
+    iterations:7,
+    resuces:2,
+    barrels:2,
+    sparks_base: 5,
+    sparks_per_floor: 3,
+  },
+  fov: true,
+  scaling: 2
+}
+
 export default class MainMenu{
   constructor() {
     this.selection = 0;
     this.options = [
-      {label: "ez",                 cb: () => this.NewGame(EZ)},
-      {label: "5 Stories,  no fov", cb: () => this.NewGame(OPTS_NO_FOV)},
-      {label: "5 Stories, yes fov", cb: () => this.NewGame(OPTS_YES_FOV)},
-      {label: "Faster scaling    ", cb: () => this.NewGame(FAST_SCALING)}
+      {label: "Normal", cb: () => this.NewGame(EZ)},
+      {label: "Hard",   cb: () => this.NewGame(HardMode)}
     ]
   }
 
+  WriteCentered(terminal, pos, str) {
+    var p = {x: pos.x - Math.floor(str.length/2), y: pos.y};
+    // console.log(p)
+    terminal.writeAt(p, str)
+  }
+
+  padString (str, length, char = ' ') {
+    return str.padStart((str.length + length) / 2, char).padEnd(length, char);
+  }
+
   Render(terminal) {
-    terminal.writeAt({x:0, y:0}, "Firefighter RL");
+    this.WriteCentered(terminal, {x:25, y:0}, "FireFighter RL")
     for (var i = 0; i < this.options.length; i += 1) {
       if (this.selection == i) {
-        terminal.writeAt({x:0, y:i+1}, "* " + this.options[i].label);
+        this.WriteCentered(terminal, {x:25, y:i+3}, "*-  "+this.padString(this.options[i].label, 10, ' ')+"  -*");
       } else {
-        terminal.writeAt({x:0, y:i+1}, "  " + this.options[i].label);
+        this.WriteCentered(terminal, {x:25, y:i+3}, this.options[i].label);
       }
     }
   }

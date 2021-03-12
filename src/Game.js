@@ -11,7 +11,7 @@ export default class Game{
       this.floors.push(new Floor({...opts.floor, heat:i, finalFloor: (opts.floors-1 == i)}))
     }
     this.currentFloor = 0;
-    this.player = new Player(this.GetCurrentFloor().map.downstairs, this);
+    this.player = new Player(this.GetCurrentFloor().map.downstairs, this, opts.player);
   }
   Hover(terminal, pos) {
     this.player.Hover(terminal, pos)

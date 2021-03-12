@@ -4,10 +4,15 @@ import MainMenu from './MainMenu.js'
 import MessageLog from './MessageLog.js'
 var PlayerGlyph = new Glyph("@", Color.Yellow)
 
-
+var defaults = {
+  hp:10,
+  h20:10,
+}
 
 export default class Player {
-  constructor(pos, game) {
+  constructor(pos, game, opts = null) {
+    this.opts = { ...defaults, ...opts }
+    console.log(this.opts)
     this.priority = 100;
     this.pos = pos
     this.hover = {
@@ -26,8 +31,8 @@ export default class Player {
       cartesianRange: true,
     });
 
-    this.currentHP = 100;
-    this.remainingWater = 20;
+    this.currentHP = this.opts.hp;
+    this.remainingWater = this.opts.h20;
 
     this.weapons = [
       {
@@ -77,14 +82,26 @@ export default class Player {
     var cf = this.game.GetCurrentFloor();
     var dest = {x: this.pos.x + dx, y: this.pos.y + dy}
     var destTile = cf.map.GetTile(dest)
+    // console.log(destTile);
 
     if (destTile.Feature != null) {
-      if (destTile.bump(this)) return;
+      var done = destTile.bump(this)
     }
-
+    window.destTile = destTile;
     if (!destTile.blocksMovement()) {
       this.pos = dest;
       this.game.TimeStep();
+
+      this.TakeDamageFromFire();
+    }
+  }
+
+  TakeDamageFromFire() {
+    var ct = this.game.GetCurrentFloor().map.GetTile(this.pos);
+    var damage = ct.fire.heat;
+    if (damage > 0) {
+      this.currentHP -= damage
+      this.log.Display("You burn for " + damage + "hp.")
     }
   }
 
@@ -156,37 +173,39 @@ export default class Player {
     var xp2 = 27-6
     var xp3 = 33-6
 
-    terminal.writeAt({x:xp, y:0}, "vitals:");
-    terminal.writeAt({x:xp2, y:1}, "hp:");
-    terminal.writeAt({x:xp3, y:1}, "" + this.currentHP + "/100", Color.Green);
+    var ybase = 2;
 
-    terminal.writeAt({x:xp2, y:2}, "h2o:");
-    terminal.writeAt({x:xp3, y:2}, " " + this.remainingWater + "/ 20", Color.Green);
-    terminal.writeAt({x:xp2, y:3}, "nozzle: ")
-    terminal.writeAt({x:xp3+2, y:3}, this.equippedWeapon().desc);
-    terminal.writeAt({x:xp2, y:5}, "civs: " + this.rescues);
+    terminal.writeAt({x:xp, y:ybase+0}, "vitals:");
+    terminal.writeAt({x:xp2, y:ybase+1}, "hp:");
+    terminal.writeAt({x:xp3, y:ybase+1}, "" + this.currentHP + "/100", Color.Green);
+
+    terminal.writeAt({x:xp2, y:ybase+2}, "h2o:");
+    terminal.writeAt({x:xp3, y:ybase+2}, " " + this.remainingWater + "/ 20", Color.Green);
+    terminal.writeAt({x:xp2, y:ybase+3}, "nozzle: ")
+    terminal.writeAt({x:xp3+2, y:ybase+3}, this.equippedWeapon().desc);
+    terminal.writeAt({x:xp2, y:ybase+5}, "civs: " + this.rescues);
     if (this.hasAmulet)
-      terminal.writeAt({x:xp2, y:6}, "carrying amulet of Rodgort");
+      terminal.writeAt({x:xp2, y:ybase+6}, "carrying amulet of Rodgort");
 
-    terminal.writeAt({x:xp2, y:8}, "-----------------");
-    terminal.writeAt({x:xp, y:9}, "target:")
+    terminal.writeAt({x:xp2, y:ybase+8}, "-----------------");
+    terminal.writeAt({x:xp, y:ybase+9}, "target:")
     if (this.game.opts.fov && !this.hover.inSight) {
-      terminal.writeAt({x:xp2, y:10}, "can't see!")
+      terminal.writeAt({x:xp2, y:ybase+10}, "can't see!")
     } else {
       var hoverTarget = cf.map.GetTile(this.hover.target);
-      terminal.writeAt({x:xp2, y:10}, "terrain: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:xp2, y:ybase+10}, "terrain: " + hoverTarget.opts.desc)
       if (hoverTarget.Feature != null)
-        terminal.writeAt({x:xp2, y:11}, "feature: " + hoverTarget.Feature.g)
-      // terminal.writeAt({x:xp2, y:11}, "desc: " + hoverTarget.opts.desc)
-      terminal.writeAt({x:xp2, y:12}, "heat:" + Math.floor(hoverTarget.fire.heat))
-      terminal.writeAt({x:xp2, y:13}, "damp:" + Math.floor(hoverTarget.fire.damp))
+        terminal.writeAt({x:xp2, y:ybase+11}, "feature: " + hoverTarget.Feature.g)
+      // terminal.writeAt({x:xp2, y:ybase+11}, "desc: " + hoverTarget.opts.desc)
+      terminal.writeAt({x:xp2, y:ybase+12}, "heat:" + Math.floor(hoverTarget.fire.heat))
+      terminal.writeAt({x:xp2, y:ybase+13}, "damp:" + Math.floor(hoverTarget.fire.damp))
     }
 
 
-    terminal.writeAt({x:xp2, y:19}, "-----------------");
+    terminal.writeAt({x:xp2, y:ybase+19}, "-----------------");
     for (var i = 0; i < 10; i += 1) {
       var msg = this.log.GetMessage(i);
-      terminal.writeAt({x:xp2, y:20+i},msg);
+      terminal.writeAt({x:xp2, y:ybase+20+i},msg);
     }
   }
 }

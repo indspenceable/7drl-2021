@@ -42,7 +42,7 @@ export default class Tile {
   }
 
   blocksMovement() {
-    return this.query('blocksMovement', false) || this.opts.BlocksMovement
+    return this.query('blocksMovement', false) || this.opts.blocksMovement
   }
   blocksSight() {
     return this.query('blocksSight', false)
