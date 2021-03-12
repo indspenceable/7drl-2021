@@ -101,7 +101,7 @@ export default class MainMenu{
           "the amulet of Rodgort, and escape,",
           "if you can!",
           "",
-          "Rescue as many trapped citizens",
+          "Rescue as many trapped civilians",
           "as you can, on the way!"],
          {w: 38, h:13, cb: () => GameMount.SetNewInputHandler(new Game(opts))}));
 

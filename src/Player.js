@@ -186,14 +186,14 @@ export default class Player {
 
     terminal.writeAt({x:xp2, y:ybase+2}, "h2o:");
     terminal.writeAt({x:xp3, y:ybase+2}, " " + this.remainingWater + "/" + this.maxWater, Color.Green);
-    terminal.writeAt({x:xp2, y:ybase+3}, "nozzle: ")
-    terminal.writeAt({x:xp3+2, y:ybase+3}, this.equippedWeapon().desc);
+    terminal.writeAt({x:xp2, y:ybase+3}, "nozzle (q/e to swap): ")
+    terminal.writeAt({x:xp2+2, y:ybase+4}, this.equippedWeapon().desc);
     terminal.writeAt({x:xp2, y:ybase+5}, "civs: " + this.rescues);
     if (this.hasAmulet)
       terminal.writeAt({x:xp2, y:ybase+6}, "carrying amulet of Rodgort");
 
     terminal.writeAt({x:xp2, y:ybase+8}, "-----------------");
-    terminal.writeAt({x:xp, y:ybase+9}, "Hovered tile:")
+    terminal.writeAt({x:xp, y:ybase+9}, "Hovered tile (use mouse):")
     if (this.game.opts.fov && !this.hover.inSight) {
       terminal.writeAt({x:xp2, y:ybase+10}, "can't see!")
     } else {

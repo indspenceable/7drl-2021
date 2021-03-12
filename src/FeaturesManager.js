@@ -15,7 +15,7 @@ const CivilianFeature = {
     tile.Feature = null;
   },
   burn: (player, tile) => {
-    player.log.Display("A citizen in need of rescue has perished.")
+    player.log.Display("A civilian has perished.")
     tile.Feature = null;
   }
 }
