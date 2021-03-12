@@ -34,7 +34,6 @@ const ExplosiveBarrelFeature= {
           }
         }
       }
-      console.log("Removing this barrel.");
       tile.Feature = null;
     }
   },

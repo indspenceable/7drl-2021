@@ -128,15 +128,18 @@ export default class Player {
 
   Render(terminal) {
     var cf = this.game.GetCurrentFloor()
-    if (this.game.opts.fov) {
-      for (var i = 0; i < cf.map.w; i += 1) {
-        for (var j = 0; j < cf.map.h; j += 1) {
-          if (this.visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
-            terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
-          }
-        }
-      }
-    }
+    // if (this.game.opts.fov) {
+    //   for (var i = 0; i < cf.map.w; i += 1) {
+    //     for (var j = 0; j < cf.map.h; j += 1) {
+    //       if (this.visibleTiles.find(hit => hit.pos.x == i && hit.pos.y == j) === undefined) {
+    //         // terminal.drawGlyph({x: i, y: j}, new Glyph(" "))
+    //         if (cf.map.GetTile({x:i, y:j}).Memory) {
+    //           terminal.drawGlyph(hit.pos, memoryGlyph)
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     // if  its in range, draw the attack line
     if (this.hover.inRange && this.hover.inSight && this.hover.inBounds) {

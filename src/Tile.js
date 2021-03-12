@@ -2,8 +2,8 @@ import { Glyph, Color } from "malwoden";
 import Util from './Util.js'
 import ColorUtil from './ColorUtil.js'
 
-const BRIGHT =[Color.Red, Color.Orange, Color.DarkOrange, Color.OrangeRed]
-const DIM = [Color.Orange, Color.DarkOrange, Color.Goldenrod]
+const DIM =[Color.Red, Color.Orange, Color.DarkOrange, Color.OrangeRed]
+// const DIM = [Color.Orange, Color.DarkOrange, Color.Goldenrod]
 
 export default class Tile {
   constructor(opts, pos) {
@@ -48,7 +48,7 @@ export default class Tile {
     return this.query('blocksSight', false)
   }
   blocksFire() {
-    return this.query('blocksFire', false) || this.Feature != null
+    return this.query('blocksFire', false)
   }
   bump(player) {
     if (this.Feature != null && this.Feature.bump != undefined) {
@@ -63,6 +63,16 @@ export default class Tile {
     var [h,s,v] = ColorUtil.rgbToHsv(choice.r, choice.g, choice.b)
     v = (heat/4)
     return new Color(...ColorUtil.hsvToRgb(h,s,v))
+  }
+
+  memoryGlyph() {
+    var c = Color.Gray;
+    var bg = Color.Black;
+    var g = '.'
+    if (this.Feature != null) {
+      g = this.Feature.g
+    }
+    return new Glyph(g, c, bg)
   }
 
   dynamicGlyph() {

@@ -28,15 +28,17 @@ var FAST_SCALING = {
 }
 
 var EZ = {
-  floors: 2,
+  floors: 3,
   floor: {
     w: 20,
     h: 30,
-    iterations:2,
+    iterations:8,
     resuces:2,
     barrels:2,
+    sparks_base: 10,
+    sparks_per_floor: 5,
   },
-  fov: false,
+  fov: true,
   scaling: 2
 }
 
