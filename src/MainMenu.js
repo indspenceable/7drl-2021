@@ -9,10 +9,12 @@ var EZ = {
     w: 20,
     h: 30,
     iterations:8,
-    resuces:2,
-    barrels:2,
+    rescues:2,
+    barrels:20,
     sparks_base: 10,
     sparks_per_floor: 5,
+    medkits: 2,
+    waterRefills: 2,
   },
   player: {
     hp:20,
@@ -97,8 +99,11 @@ export default class MainMenu{
           "to challenge the House of Flames!",
           "Ascend to the top floor, claim",
           "the amulet of Rodgort, and escape,",
-          "if you can!"],
-         {w: 38, h:11, cb: () => GameMount.SetNewInputHandler(new Game(opts))}));
+          "if you can!",
+          "",
+          "Rescue as many trapped citizens",
+          "as you can, on the way!"],
+         {w: 38, h:13, cb: () => GameMount.SetNewInputHandler(new Game(opts))}));
 
   }
 }

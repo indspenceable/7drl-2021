@@ -3,7 +3,7 @@ import Util from './Util.js'
 
 const CONFIG = {
   radius: 2,
-  heat: 7,
+  heat: 2,
 }
 
 const CivilianFeature = {
@@ -13,6 +13,41 @@ const CivilianFeature = {
     player.log.Display("You rescued a civilian.")
     player.rescues +=1
     tile.Feature = null;
+  },
+  burn: (player, tile) => {
+    player.log.Display("A citizen in need of rescue has perished.")
+    tile.Feature = null;
+  }
+}
+const MedkitFeature = {
+  blocksMovement: false,
+  g: "+",
+  c: Color.Red,
+  bg: Color.Green,
+  burn: (player, tile) => {
+    player.log.Display("A medkit burns up.")
+    tile.Feature = null;
+  },
+  bump: (player, tile) => {
+    player.log.Display("You apply the medkit! HP Restored.");
+    tile.Feature = null;
+    player.currentHP = player.maxHP;
+  }
+}
+
+const WaterJug = {
+  blocksMovement: false,
+  g: "%",
+  c: Color.Black,
+  bg: Color.Blue,
+  burn: (player, tile) => {
+    player.log.Display("A water refill canister bursts!")
+    tile.Feature =null;
+  },
+  bump: (player, tile) => {
+    player.log.Display("You install the water refill canister")
+    tile.Feature =null;
+    player.remainingWater = player.maxWater;
   }
 }
 
@@ -21,23 +56,24 @@ const ExplosiveBarrelFeature= {
   g: "O",
   c:Color.Black,
   bg:Color.Green,
-  burn: (tile, player) => {
+  burn: (player, tile) => {
     var floor = player.game.GetCurrentFloor();
-    var roll = (Math.random() * 30) + 3;
+    var roll = (Math.random() * 10);
     // console.log(tile);
+    // console.log("EXPLOSION???  " + roll + tile.fire.heat) ;
     if (tile.fire.heat > roll) {
       player.log.Display("A barrel explodes!")
       for (var dx = -CONFIG.radius; dx <= CONFIG.radius; dx+=1){
         for (var dy = -CONFIG.radius; dy <= CONFIG.radius; dy+=1){
           if (dx*dx + dy*dy <= CONFIG.radius * CONFIG.radius) {
-           floor.map.GetTile({x: tile.pos.x+dx, y: tile.pos.y+dy}).fire.heat += CONFIG.heat;
+            var fd = floor.map.GetTile({x: tile.pos.x+dx, y: tile.pos.y+dy}).fire;
+           fd.heat = Math.max(fd.heat, Math.floor(CONFIG.heat));
           }
         }
       }
       tile.Feature = null;
     }
-  },
-  flammabilityDelta: 20,
+  }
 };
 
 
@@ -57,18 +93,22 @@ export default class FeaturesManager {
         newBarrelTile.Feature = {...ExplosiveBarrelFeature}
       }
     }
-    var spawnedCiv = []
-    while(spawnedCiv.length < this.floor.opts.rescues){
-      this.SpawnRescue(spawnedCiv);
+    this.SpawnAllObjects(CivilianFeature, this.floor.opts.rescues);
+    this.SpawnAllObjects(MedkitFeature, this.floor.opts.medkits);
+    this.SpawnAllObjects(WaterJug, this.floor.opts.waterRefills);
+  }
+  SpawnAllObjects(obj, count) {
+    var list = []
+    while(list.length < count){
+      this.SpawnObject(obj, list);
     }
   }
-  SpawnRescue(spawnedCiv) {
-    var newCiv = this.floor.map.builder.RandomFloor()
-    var civTile = this.floor.map.GetTile(newCiv)
-    if (civTile.Feature == null) {
-      spawnedCiv.push(newCiv)
-      var that = this;
-      civTile.Feature ={...CivilianFeature};
+  SpawnObject(obj, list) {
+    var newObj = this.floor.map.builder.RandomFloor()
+    var currentTile = this.floor.map.GetTile(newObj)
+    if (currentTile.Feature == null) {
+      list.push(newObj)
+      currentTile.Feature ={...obj};
     }
   }
   Render(terminal) {

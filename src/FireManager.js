@@ -20,8 +20,8 @@ export default class FireManager {
     for (var i = 0; i < count; i+=1) {
       litTile = this.LightRandomTile();
     }
-    for (var i = 0; i < count; i +=1)
-      this.TimeStep();
+    // for (var i = 0; i < count; i +=1)
+    //   this.TimeStep();
   }
 
   LightRandomTile() {
@@ -49,44 +49,54 @@ export default class FireManager {
             current.damp -= 1;
           }
         }
+        if (mapTile.Feature != null && current.heat >= 1) {
+          if (mapTile.Feature.Nonburning)
+            current.heat = 0;
+          else {
+            var roll = Math.random() * 10;
+            console.log( roll);
+            console.log(5*current.heat)
+            if (roll < 5*current.heat){
+              var burn = mapTile.Feature.burn
+              // console.log(burn);
+              // console.log(mapTile);
+              if (burn != undefined){
+                burn(player, mapTile);
+              }
+            }
+          }
+        }
+
 
         if (current.heat == 0) {
           // console.log("no heat");
         } else if (current.cd > 0) {
           current.cd -= 1;
           // console.log("cd" + current.cd)
+        } else if (current.heat == 1) {
+          if (Math.random() * 100 < 1) current.heat = 0;
         } else {
-          if (current.Feature != null && Math.random() * 100 < 1){
-            var burn = current.Feature.burn
-            if (burn != undefined) burn(current, player);
+          var distance = (current.heat * current.heat);
+          var hits = this.fov.calculateArray({x, y}, distance)
+          var closeHits = hits.filter(h => h.r <= distance);
+          var hit = Util.Pick(hits);
+          var roll = Math.floor(Math.random() * 100);
+          if (roll == 0 && current.heat==3) {
+            var hit2 = Util.Pick(hits)
+            var hitFireData2 = this.GetTile(hit2.pos)
+            hitFireData2.heat = Math.max(hitFireData2.heat,2);
           }
+          if (hit !== undefined & (roll < (distance-hit.r)*10)) {
+            var hitTile = this.floor.map.GetTile(hit.pos);
+            var hitFireData = this.GetTile(hit.pos)
 
-
-          if (current.heat == 1) {
-            if (Math.random() * 100 < 1) current.heat = 0;
-          } else {
-            var distance = (current.heat * current.heat);
-            var hits = this.fov.calculateArray({x, y}, distance)
-            var closeHits = hits.filter(h => h.r <= distance);
-            var hit = Util.Pick(hits);
-            var roll = Math.floor(Math.random() * 100);
-            if (roll == 0 && current.heat==3) {
-              var hit2 = Util.Pick(hits)
-              var hitFireData2 = this.GetTile(hit2.pos)
-              hitFireData2.heat = Math.max(hitFireData2.heat,2);
+            if (hitTile.damp > 0 && Math.Random()*10 < hitTile.damp) {
+              hitTile.damp -= 1;
             }
-            if (hit !== undefined & (roll < (distance-hit.r)*10)) {
-              var hitTile = this.floor.map.GetTile(hit.pos);
-              var hitFireData = this.GetTile(hit.pos)
-
-              if (hitTile.damp > 0 && Math.Random()*10 < hitTile.damp) {
-                hitTile.damp -= 1;
-              }
-              else
-              {
-                hitFireData.cd = Math.floor(Math.random(5));
-                hitFireData.heat = Math.max(hitFireData.heat,1);
-              }
+            else
+            {
+              hitFireData.cd = Math.floor(Math.random(5));
+              hitFireData.heat = Math.max(hitFireData.heat,1);
             }
           }
           current.cd = Math.floor(Math.random(5));

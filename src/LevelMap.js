@@ -45,6 +45,7 @@ const DOWNSTAIRS_FEATURE = {
   g: '>',
   c: Color.Red,
   blocksMovement: false,
+  Nonburning: true,
   bump: (player, tile) => {
     if (player.hasAmulet) {
       player.log.Display("You descend the stairs...")
@@ -63,6 +64,7 @@ const ENTRANCE_FEATURE = {
   c: Color.Black,
   bg: Color.Red,
   blocksMovement: false,
+  Nonburning: true,
   bump: (player, tile) => {
     if (player.hasAmulet) {
       GameMount.SetNewInputHandler(new MessageWindow(player.game,
@@ -71,14 +73,17 @@ const ENTRANCE_FEATURE = {
          "to claim the amulet of rodgort.",
          "",
          "At long last, you are victorious!",
-         "Congratulations!"
+         "Congratulations!",
+         "",
+         "You saved: " + player.rescues + " of " + player.game.opts.floors * player.game.opts.floor.rescues
          ],
-         {w: 35, h:10, cb: () => GameMount.SetNewInputHandler(new MainMenu())}));
+         {w: 35, h:13, cb: () => GameMount.SetNewInputHandler(new MainMenu())}));
     } else {
       player.log.Display("You can't return without the amulet!")
       return true;
     }
   }
+
 }
 
 const DOOR_FEATURE = {
@@ -93,18 +98,28 @@ const WALL_FEATURE = {
   blocksMovement: true,
   flammabilityDelta: -50,
   blocksFire: true,
-  bump: (player, tile) => {
+  damage: (player, tile, str) => {
     if (tile.damage === undefined)
       tile.damage = 0;
-    player.log.Display("You chop at the wall.")
+    player.log.Display(str)
     tile.damage += 1;
     if (tile.damage >= 3) {
       tile.Feature = null;
       player.log.Display("The wall crumbles!")
     }
+    return true;
+  },
+
+  bump: (player, tile) => {
+    var rtn = tile.Feature.damage(player, tile, "You swing your axe at the wall.")
     player.TakeDamageFromFire();
     player.game.TimeStep();
-    return true;
+    return rtn;
+  },
+  burn: (player, tile) => {
+    if (Math.random() * 100 < 1)
+      return tile.Feature.damage(player, tile, "The wall burns.")
+    return false;
   }
 }
 
