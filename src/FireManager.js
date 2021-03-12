@@ -43,12 +43,25 @@ export default class FireManager {
         var current = this.GetTile({x,y})
         var mapTile = this.floor.map.GetTile({x,y})
 
+        if (current.damp > 0 && current.heat > 0) {
+          if (Math.random() * 100 < current.damp*5) {
+            current.heat -= 1;
+            current.damp -= 1;
+          }
+        }
+
         if (current.heat == 0) {
           // console.log("no heat");
         } else if (current.cd > 0) {
           current.cd -= 1;
           // console.log("cd" + current.cd)
         } else {
+          if (current.Feature != null && Math.random() * 100 < 1){
+            var burn = current.Feature.burn
+            if (burn != undefined) burn(current, player);
+          }
+
+
           if (current.heat == 1) {
             if (Math.random() * 100 < 1) current.heat = 0;
           } else {
@@ -65,8 +78,15 @@ export default class FireManager {
             if (hit !== undefined & (roll < (distance-hit.r)*10)) {
               var hitTile = this.floor.map.GetTile(hit.pos);
               var hitFireData = this.GetTile(hit.pos)
-              hitFireData.cd = Math.floor(Math.random(5));
-              hitFireData.heat = Math.max(hitFireData.heat,1);
+
+              if (hitTile.damp > 0 && Math.Random()*10 < hitTile.damp) {
+                hitTile.damp -= 1;
+              }
+              else
+              {
+                hitFireData.cd = Math.floor(Math.random(5));
+                hitFireData.heat = Math.max(hitFireData.heat,1);
+              }
             }
           }
           current.cd = Math.floor(Math.random(5));

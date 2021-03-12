@@ -2,6 +2,8 @@ import { Glyph, Color, Input, FOV } from "malwoden";
 import Util from './Util.js'
 import MainMenu from './MainMenu.js'
 import MessageLog from './MessageLog.js'
+import MessageWindow from './MessageWindow.js'
+import GameMount from './GameMount.js'
 var PlayerGlyph = new Glyph("@", Color.Yellow)
 
 var defaults = {
@@ -12,7 +14,7 @@ var defaults = {
 export default class Player {
   constructor(pos, game, opts = null) {
     this.opts = { ...defaults, ...opts }
-    console.log(this.opts)
+    // console.log(this.opts)
     this.priority = 100;
     this.pos = pos
     this.hover = {
@@ -32,20 +34,22 @@ export default class Player {
     });
 
     this.currentHP = this.opts.hp;
+    this.maxHP = this.opts.hp
     this.remainingWater = this.opts.h20;
+    this.maxWater = this.opts.h20;
 
     this.weapons = [
       {
         desc:"focused",
-        power: 12,
+        power: 7,
         radius: 0,
-        range: 20,
+        range: 10,
       },
       {
         desc:"spray",
-        power: 4,
+        power: 2,
         radius: 2,
-        range: 10
+        range: 5
       }
       ];
     this.currentWeapon = 0;
@@ -84,15 +88,16 @@ export default class Player {
     var destTile = cf.map.GetTile(dest)
     // console.log(destTile);
 
-    if (destTile.Feature != null) {
-      var done = destTile.bump(this)
-    }
-    window.destTile = destTile;
-    if (!destTile.blocksMovement()) {
-      this.pos = dest;
-      this.game.TimeStep();
-
-      this.TakeDamageFromFire();
+    if (destTile.Feature != null && destTile.bump(this)) {
+        this.TakeDamageFromFire();
+        this.game.TimeStep();
+    } else {
+      window.destTile = destTile;
+      if (!destTile.blocksMovement()) {
+        this.pos = dest;
+        this.TakeDamageFromFire();
+        this.game.TimeStep();
+      }
     }
   }
 
@@ -106,18 +111,12 @@ export default class Player {
   }
 
   ShootWater(tPos, radius, power) {
-    this.log.Display("You fire the water cannon.")
     var cf = this.game.GetCurrentFloor()
     for (var i = -radius; i <= radius; i += 1) {
       for (var j = -radius; j <= radius; j += 1) {
         if (cf.map.InBounds(tPos) && Math.abs(i) + Math.abs(j) <= radius) {
           var tile = cf.map.GetTile({x: tPos.x+i, y: tPos.y+j});
-          if (tile.fire.heat < power) {
-            tile.fire.heat = 0
-            tile.fire.damp = power-tile.fire.heat
-          } else {
-            tile.fire.heat -= power;
-          }
+          tile.fire.damp += power;
         }
       }
     }
@@ -126,7 +125,13 @@ export default class Player {
 
   TimeStep() {
     if (this.currentHP <= 0) {
-      GameMount.SetNewInputHandler(new MainMenu());
+      GameMount.SetNewInputHandler(new MessageWindow(this.game,
+        ["Alas, the fire has proven too much",
+          "to bear. You were unable to recover",
+          "the amulet of Rodgort this time.",
+         "",
+         "Try again soon!"],
+         {w: 38, h:11, cb: () => GameMount.SetNewInputHandler(new MainMenu())}));
     }
   }
 
@@ -177,10 +182,10 @@ export default class Player {
 
     terminal.writeAt({x:xp, y:ybase+0}, "vitals:");
     terminal.writeAt({x:xp2, y:ybase+1}, "hp:");
-    terminal.writeAt({x:xp3, y:ybase+1}, "" + this.currentHP + "/100", Color.Green);
+    terminal.writeAt({x:xp3, y:ybase+1}, "" + this.currentHP + "/" + this.maxHP, Color.Green);
 
     terminal.writeAt({x:xp2, y:ybase+2}, "h2o:");
-    terminal.writeAt({x:xp3, y:ybase+2}, " " + this.remainingWater + "/ 20", Color.Green);
+    terminal.writeAt({x:xp3, y:ybase+2}, " " + this.remainingWater + "/" + this.maxWater, Color.Green);
     terminal.writeAt({x:xp2, y:ybase+3}, "nozzle: ")
     terminal.writeAt({x:xp3+2, y:ybase+3}, this.equippedWeapon().desc);
     terminal.writeAt({x:xp2, y:ybase+5}, "civs: " + this.rescues);
@@ -188,7 +193,7 @@ export default class Player {
       terminal.writeAt({x:xp2, y:ybase+6}, "carrying amulet of Rodgort");
 
     terminal.writeAt({x:xp2, y:ybase+8}, "-----------------");
-    terminal.writeAt({x:xp, y:ybase+9}, "target:")
+    terminal.writeAt({x:xp, y:ybase+9}, "Hovered tile:")
     if (this.game.opts.fov && !this.hover.inSight) {
       terminal.writeAt({x:xp2, y:ybase+10}, "can't see!")
     } else {

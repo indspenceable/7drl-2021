@@ -1,6 +1,7 @@
 import { CharCode, Color, Terminal, Input } from "malwoden";
 import Game from './Game.js';
 import GameMount from './GameMount.js'
+import MessageWindow from './MessageWindow.js'
 
 var EZ = {
   floors: 3,
@@ -13,12 +14,16 @@ var EZ = {
     sparks_base: 10,
     sparks_per_floor: 5,
   },
+  player: {
+    hp:20,
+    h20:20,
+  },
   fov: true,
   scaling: 2
 }
 
 
-var EZ = {
+var HARD = {
   floors: 5,
   floor: {
     w: 20,
@@ -26,10 +31,10 @@ var EZ = {
     iterations:7,
     resuces:2,
     barrels:2,
-    sparks_base: 5,
-    sparks_per_floor: 3,
+    sparks_base: 10,
+    sparks_per_floor: 7,
   },
-  fov: true,
+  fov: false,
   scaling: 2
 }
 
@@ -86,7 +91,15 @@ export default class MainMenu{
     this.options[this.selection].cb();
   }
   NewGame(opts) {
-    GameMount.SetNewInputHandler(new Game(opts));
+    var that = this;
+    GameMount.SetNewInputHandler(new MessageWindow(that,
+        [ "You are a brave firefighter",
+          "to challenge the House of Flames!",
+          "Ascend to the top floor, claim",
+          "the amulet of Rodgort, and escape,",
+          "if you can!"],
+         {w: 38, h:11, cb: () => GameMount.SetNewInputHandler(new Game(opts))}));
+
   }
 }
 

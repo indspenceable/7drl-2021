@@ -9,7 +9,6 @@ var FLOOR_OPTS = {
   terrain: '.',
   desc: 'open floor',
   flammability: 100,
-  burnSpeed: 105,
   blocksMovement: false,
   blocksFire: false,
   blocksSight: false
@@ -19,7 +18,6 @@ var OOB_OPTS = {
   terrain: '?',
   desc: '???',
   glyph: new Glyph('?'),
-  burnSpeed: 0,
   flammability: 0,
   blocksMovement: true,
   blocksFire: true,
@@ -104,6 +102,8 @@ const WALL_FEATURE = {
       tile.Feature = null;
       player.log.Display("The wall crumbles!")
     }
+    player.TakeDamageFromFire();
+    player.game.TimeStep();
     return true;
   }
 }

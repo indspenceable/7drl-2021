@@ -21,7 +21,7 @@ const ExplosiveBarrelFeature= {
   g: "O",
   c:Color.Black,
   bg:Color.Green,
-  tick: (tile, player) => {
+  burn: (tile, player) => {
     var floor = player.game.GetCurrentFloor();
     var roll = (Math.random() * 30) + 3;
     // console.log(tile);

@@ -61,7 +61,7 @@ export default class Tile {
     var choice = Util.Pick(options);
     // console.log(choice);
     var [h,s,v] = ColorUtil.rgbToHsv(choice.r, choice.g, choice.b)
-    v = (heat/4)
+    v = (heat/8)
     return new Color(...ColorUtil.hsvToRgb(h,s,v))
   }
 
@@ -87,9 +87,9 @@ export default class Tile {
     }
 
     if (this.fire.heat > 0){
-      c = this.FireColor(DIM, this.fire.heat, 0.25)
+      c = this.FireColor(DIM, this.fire.heat*2+1, 0.25)
       if (this.fire.heat > 15)
-        bg = this.FireColor(DIM, this.fire.heat, 0)
+        bg = this.FireColor(DIM, this.fire.heat*2+1, 0)
       g = g || '^'
     } else if (this.fire.damp >= 1) {
       c = Color.Blue
